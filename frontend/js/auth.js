@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================================
-  // FEATURE 2: Sign Up Submission & Validation
+  // FEATURE 2: Sign Up Submission & Security Validation
   // ==========================================
   if (signupForm) {
     signupForm.addEventListener("submit", (e) => {
@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
         username: usernameInput.value,
         email: emailInput.value,
         phone: phoneInput.value,
-        password: passwordInput.value // Send the raw password, backend will hash it!
+        password: passwordInput.value 
       };
 
       // Send the request to your backend API
@@ -106,12 +106,10 @@ document.addEventListener("DOMContentLoaded", () => {
       .then(response => response.json())
       .then(data => {
         if (data.error) {
-          // If the backend sends an error (like "username already exists")
           alert("Error: " + data.error);
         } else {
-          // If the backend successfully saved the user!
           alert("Account securely created! You can now login.");
-          window.location.href = "login.html"; // Redirect to login page
+          window.location.href = "login.html"; 
         }
       })
       .catch(error => {
@@ -122,14 +120,39 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================================
-  // FEATURE 3: Login Submission 
+  // FEATURE 3: REAL Login Submission (Checks Database)
   // ==========================================
   if (loginForm) {
     loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
 
-      alert("Login successful (demo)");
-      window.location.href = "dashboard.html";
+      const loginId = document.getElementById("loginIdentifier").value;
+      const loginPass = document.getElementById("loginPassword").value;
+
+      // Make a real call to your Node backend
+      fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usernameOrEmail: loginId, // Matches backend perfectly!
+          password: loginPass
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert("Security Alert: " + data.error);
+        } else {
+          alert("Authentication successful. Welcome!");
+          // Let the dashboard know we are authorized
+          localStorage.setItem("token", "logged-in"); 
+          window.location.href = "dashboard.html";
+        }
+      })
+      .catch(error => {
+        console.error("Error connecting to server:", error);
+        alert("Failed to connect to the backend.");
+      });
     });
   }
 
