@@ -3,7 +3,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const { body, validationResult } = require('express-validator');
-
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 // 1. SIGNUP API (Hash password and store user)
@@ -75,7 +75,15 @@ router.post('/login', [
     }
 
     // Success! (We will add JWT token generation here later)
-    res.status(200).json({ message: "Login successful!" });
+    const jwt = require('jsonwebtoken');
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    res.status(200).json({ message: "Login successful!", token, role: user.role });
 
   } catch (error) {
     console.error(error);
