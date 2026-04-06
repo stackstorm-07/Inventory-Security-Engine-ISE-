@@ -4,8 +4,12 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
-// ✅ 1. UNCOMMENTED: Bring in your new authentication routes
+// Auth routes
 const authRoutes = require('./routes/authRoutes');
+
+// Middleware imports
+const { verifyToken } = require('./middleware/auth');
+const { requireRole } = require('./middleware/rbac');
 
 const app = express();
 
@@ -18,17 +22,15 @@ app.use(express.json());
 // Serve the frontend folder
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
-// Test route to ensure API is running
+// Test route
 app.get('/api-status', (req, res) => {
   res.send('API is running...');
 });
 
-// ✅ 2. UNCOMMENTED: Tell Express to use the auth routes for any /api/auth requests!
+// Auth routes
 app.use('/api/auth', authRoutes);
-const { verifyToken } = require('./middleware/auth');
-const { requireRole } = require('./middleware/rbac');
 
-// Protected route examples
+// Protected routes
 app.get('/api/dashboard', verifyToken, requireRole('admin', 'manager', 'user'), (req, res) => {
   res.json({ message: `Welcome ${req.user.username}! Role: ${req.user.role}` });
 });
