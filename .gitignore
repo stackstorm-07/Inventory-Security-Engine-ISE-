@@ -1,0 +1,10 @@
+# Ignore node_modules in any directory
+node_modules/
+
+# Ignore environment variables
+.env
+backend/.env
+
+# Ignore specific certificate files
+backend/certs/cert.pem
+backend/certs/key.pem
