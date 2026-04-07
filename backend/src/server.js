@@ -1,8 +1,9 @@
+require('dotenv').config({ path: __dirname + '/../.env' }); // ✅ MUST BE FIRST
+
 const https = require('https');
 const fs = require('fs');
 const app = require('./app');
 const pool = require('./config/db');
-require('dotenv').config({ path: './.env' });
 
 const PORT = process.env.PORT || 5000;
 const HTTPS_PORT = process.env.HTTPS_PORT || 5443;
@@ -17,6 +18,8 @@ async function startServer() {
       console.log(`🔐 HTTP running on http://localhost:${PORT}`);
     });
 
+    // OPTIONAL: comment HTTPS if certs not present
+    /*
     const httpsOptions = {
       key: fs.readFileSync('./certs/key.pem'),
       cert: fs.readFileSync('./certs/cert.pem')
@@ -25,6 +28,7 @@ async function startServer() {
     https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
       console.log(`🔐 HTTPS running on https://localhost:${HTTPS_PORT}`);
     });
+    */
 
   } catch (err) {
     console.error('❌ Database connection failed:', err);
