@@ -4,7 +4,7 @@ const https = require('https');
 const fs = require('fs');
 const app = require('./app');
 const pool = require('./config/db');
-require('dotenv').config({ path: './.env' });
+const initializeDatabase = require('./initDb');
 
 const PORT = process.env.PORT || 5000;
 const HTTPS_PORT = process.env.HTTPS_PORT || 5443;
