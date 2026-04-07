@@ -33,7 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 // Protected routes
-app.get('/api/dashboard', verifyToken, requireRole('admin', 'manager', 'user'), (req, res) => {
+app.get('/api/dashboard', verifyToken, requireRole('admin', 'staff', 'viewer'), (req, res) => {
   res.json({ message: `Welcome ${req.user.username}! Role: ${req.user.role}` });
 });
 
@@ -41,8 +41,8 @@ app.get('/api/admin', verifyToken, requireRole('admin'), (req, res) => {
   res.json({ message: 'Admin only area' });
 });
 
-app.get('/api/reports', verifyToken, requireRole('admin', 'manager'), (req, res) => {
-  res.json({ message: 'Reports - admin and manager only' });
+app.get('/api/reports', verifyToken, requireRole('admin', 'staff'), (req, res) => {
+  res.json({ message: 'Reports - admin and staff only' });
 });
 
 module.exports = app;
