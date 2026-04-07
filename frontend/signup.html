@@ -6,6 +6,7 @@
 <title>Sign Up</title>
 
 <link rel="stylesheet" href="css/auth.css">
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
 
@@ -36,6 +37,17 @@
         <div class="checkbox-container">
           <input type="checkbox" id="termsCheckbox" required>
           <label for="termsCheckbox">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+        </div>
+<!-- ✅ TEXT CAPTCHA (canvas + regex, no API key needed) -->
+        <div class="captcha-box">
+          <label class="captcha-label">Captcha</label>
+          <div class="captcha-row">
+            <canvas id="captchaCanvas" width="160" height="48"></canvas>
+            <button type="button" id="refreshCaptcha" title="Refresh CAPTCHA">&#x21bb;</button>
+          </div>
+          <input type="text" id="captchaInput" placeholder="Enter characters above"
+                 autocomplete="off" maxlength="6" required>
+          <span id="captchaError" class="captcha-error"></span>
         </div>
 
         <button type="submit">Create Account</button>

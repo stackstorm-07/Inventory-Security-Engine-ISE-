@@ -157,4 +157,80 @@ input[type="checkbox"] {
   margin-bottom: 12px;
   padding-left: 5px;
   font-weight: bold;
+}/* =========================================================
+   TEXT CAPTCHA — append these lines to the bottom of auth.css
+   ========================================================= */
+
+.captcha-box {
+  margin-bottom: 15px;
+}
+
+.captcha-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+/* Row: canvas image + refresh button side by side */
+.captcha-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#captchaCanvas {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  display: block;
+  /* override any global input styles */
+  background: #f0f4ff !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 160px;
+  height: 48px;
+}
+
+/* Refresh / reload button — small, icon-only */
+#refreshCaptcha {
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  background: #f1f5f9;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+#refreshCaptcha:hover {
+  background: #e2e8f0;
+  color: #f84f4f;
+}
+
+/* The text input below the canvas */
+#captchaInput {
+  background-image: none !important;  /* no icon needed */
+  padding-left: 12px !important;
+  letter-spacing: 4px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 15px;
+}
+
+/* Inline error message */
+.captcha-error {
+  display: block;
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: -10px;
+  margin-bottom: 6px;
+  min-height: 16px;
 }

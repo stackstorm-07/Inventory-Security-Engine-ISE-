@@ -3,15 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
-
+<title>Login – Inventory Security Engine</title>
 <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
 
 <div class="wrapper">
 
-  <!-- LEFT SIDE (IMAGE / BRAND) -->
+  <!-- LEFT SIDE -->
   <div class="left-panel">
     <div class="overlay">
       <h1>Inventory Security Engine</h1>
@@ -19,19 +18,26 @@
     </div>
   </div>
 
-  <!-- RIGHT SIDE (FORM) -->
+  <!-- RIGHT SIDE -->
   <div class="right-panel">
     <div class="form-box">
       <h2>Login</h2>
       <p>Access your account</p>
 
-    <form id="loginForm">
-        <input type="text" id="loginIdentifier" placeholder="Username or Email" required>
-        <input type="password" id="loginPassword" placeholder="Password" required>
+      <form id="loginForm">
+        <input type="text"     id="loginIdentifier" placeholder="Username or Email" required>
+        <input type="password" id="loginPassword"   placeholder="Password"          required>
 
+        <!-- ✅ TEXT CAPTCHA (canvas + regex, no API key needed) -->
         <div class="captcha-box">
-          <label for="loginCaptcha">What is <span id="loginCaptchaQuestion"></span>?</label>
-          <input type="text" id="loginCaptcha" placeholder="Answer" required>
+          <label class="captcha-label">Captcha</label>
+          <div class="captcha-row">
+            <canvas id="captchaCanvas" width="160" height="48"></canvas>
+            <button type="button" id="refreshCaptcha" title="Refresh CAPTCHA">&#x21bb;</button>
+          </div>
+          <input type="text" id="captchaInput" placeholder="Enter characters above"
+                 autocomplete="off" maxlength="6" required>
+          <span id="captchaError" class="captcha-error"></span>
         </div>
 
         <button type="submit">Login</button>
@@ -41,7 +47,7 @@
         <a href="#" id="forgotPasswordLink">Forgot password?</a>
       </div>
 
-      <div id="forgotPasswordBox" style="display:none; margin-top: 1rem;">
+      <div id="forgotPasswordBox" style="display:none; margin-top:1rem;">
         <p>Enter your email to request a reset code.</p>
         <form id="forgotPasswordForm">
           <input type="email" id="forgotEmail" placeholder="Email address" required>
@@ -49,19 +55,19 @@
         </form>
       </div>
 
-      <div id="resetPasswordBox" style="display:none; margin-top: 1rem;">
+      <div id="resetPasswordBox" style="display:none; margin-top:1rem;">
         <p>Paste the reset code and choose a new password.</p>
         <form id="resetPasswordForm">
-          <input type="email" id="resetEmail" placeholder="Email address" required>
-          <input type="text" id="resetToken" placeholder="Reset code" required>
-          <input type="password" id="resetPassword" placeholder="New password" required>
+          <input type="email"    id="resetEmail"           placeholder="Email address"    required>
+          <input type="text"     id="resetToken"           placeholder="Reset code"        required>
+          <input type="password" id="resetPassword"        placeholder="New password"      required>
           <input type="password" id="resetConfirmPassword" placeholder="Confirm new password" required>
           <button type="submit">Reset password</button>
         </form>
       </div>
 
       <p class="switch">
-        Don’t have an account? <a href="signup.html">Create Account</a>
+        Don't have an account? <a href="signup.html">Create Account</a>
       </p>
     </div>
   </div>
