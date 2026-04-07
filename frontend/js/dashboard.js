@@ -1,15 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 1. CONSOLIDATED DATA STORAGE
-    // These items show up as soon as the page loads
-    let inventoryData = [
-        { id: "ITM-001", name: "MacBook Pro 16-inch", user: "Admin", status: "Operational" },
-        { id: "ITM-002", name: "Cisco Firewall", user: "Ankit", status: "Maintenance" },
-        { id: "ITM-003", name: "Server Rack A", user: "Security_Auth", status: "Operational" },
-        { id: "ITM-004", name: "Logitech Webcam", user: "Staff_01", status: "Operational" }
-    ];
+    // Check authentication
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "login.html";
+        return;
+    }
 
-    // 2. ELEMENT SELECTORS
+    // 1. ELEMENT SELECTORS
     const tableBody = document.getElementById("inventoryTableBody");
     const openBtn = document.getElementById("openModalBtn");
     const closeBtn = document.getElementById("closeModalBtn");
@@ -22,6 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const statAlerts = document.querySelector(".card-yellow .stat-value"); // Active Alerts (Maintenance)
     const statResolved = document.querySelector(".card-green .stat-value"); // Resolved Today (Operational)
 
+    let inventoryData = [];
+
+    // Load initial data
+    loadDashboardData();
+
     // 3. UI REFRESH FUNCTION
     // This function handles the "Reflection"—it updates the table AND the boxes
     function refreshDashboard() {
@@ -32,22 +35,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Rebuild table from our data array
         inventoryData.forEach((item, index) => {
-            const isMaint = item.status === "Maintenance";
-            const statusIcon = item.status === "Operational" ? "✅" : "⚠️";
+            const isMaint = item.status === "maintenance";
+            const statusIcon = item.status === "available" || item.status === "checked_out" ? "✅" : "⚠️";
+            const statusText = item.status.charAt(0).toUpperCase() + item.status.replace('_', ' ').slice(1);
             
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>#${item.id}</td>
+                <td>#${item.asset_id}</td>
                 <td>${item.name}</td>
-                <td>${item.user}</td>
+                <td>${item.assigned_to || 'Unassigned'}</td>
                 <td>
                     <span class="status-badge" style="${isMaint ? 'background:#fee2e2; color:#dc2626;' : 'background:#dcfce7; color:#16a34a;'}">
-                        ${statusIcon} ${item.status}
+                        ${statusIcon} ${statusText}
                     </span>
                 </td>
                 <td>
-                    <button onclick="removeAsset(${index})" style="color:#ef4444; border:none; background:none; cursor:pointer; font-weight:600; font-size:0.8rem;">Remove</button>
-                    ${isMaint ? `<button onclick="markAsComplete(${index})" style="color:#16a34a; border:none; background:none; cursor:pointer; font-weight:600; font-size:0.8rem; margin-left:10px;">Mark Done</button>` : ''}
+                    <button onclick="removeAsset('${item.asset_id}')" style="color:#ef4444; border:none; background:none; cursor:pointer; font-weight:600; font-size:0.8rem;">Remove</button>
+                    ${isMaint ? `<button onclick="markAsComplete('${item.asset_id}')" style="color:#16a34a; border:none; background:none; cursor:pointer; font-weight:600; font-size:0.8rem; margin-left:10px;">Mark Done</button>` : ''}
                 </td>
             `;
             tableBody.appendChild(row);
@@ -58,12 +62,53 @@ document.addEventListener("DOMContentLoaded", () => {
         if (statTotal) statTotal.innerText = inventoryData.length;
         
         // 2. Active Alerts Box (Counts Maintenance items)
-        const maintCount = inventoryData.filter(i => i.status === "Maintenance").length;
+        const maintCount = inventoryData.filter(i => i.status === "maintenance").length;
         if (statAlerts) statAlerts.innerText = maintCount;
 
-        // 3. Resolved Today Box (Counts Operational/Completed items)
-        const completedCount = inventoryData.filter(i => i.status === "Operational").length;
-        if (statResolved) statResolved.innerText = completedCount;
+        // 3. Resolved Today Box (Counts Available items)
+        const availableCount = inventoryData.filter(i => i.status === "available").length;
+        if (statResolved) statResolved.innerText = availableCount;
+    }
+
+    async function loadDashboardData() {
+        try {
+            // For now, we'll simulate loading assets data
+            // In a full implementation, you'd have an API endpoint for assets
+            const response = await fetch('http://localhost:5000/api/dashboard/inventory-logs', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                window.location.href = "login.html";
+                return;
+            }
+
+            // For demo purposes, use sample data
+            inventoryData = [
+                { asset_id: "AST-001", name: "Dell Laptop XPS 13", assigned_to: "John Doe", status: "checked_out" },
+                { asset_id: "AST-045", name: "Samsung Monitor 27\"", assigned_to: null, status: "available" },
+                { asset_id: "AST-023", name: "HP Printer LaserJet", assigned_to: null, status: "maintenance" },
+                { asset_id: "AST-067", name: "Apple iPad Pro", assigned_to: "Sarah Wilson", status: "checked_out" }
+            ];
+
+            refreshDashboard();
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            // Fallback to sample data
+            inventoryData = [
+                { asset_id: "AST-001", name: "Dell Laptop XPS 13", assigned_to: "John Doe", status: "checked_out" },
+                { asset_id: "AST-045", name: "Samsung Monitor 27\"", assigned_to: null, status: "available" },
+                { asset_id: "AST-023", name: "HP Printer LaserJet", assigned_to: null, status: "maintenance" },
+                { asset_id: "AST-067", name: "Apple iPad Pro", assigned_to: "Sarah Wilson", status: "checked_out" }
+            ];
+            refreshDashboard();
+        }
     }
 
     // 4. ADD EQUIPMENT LOGIC
@@ -75,10 +120,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const name = document.getElementById("assetName").value;
             const user = document.getElementById("assetUser").value;
             const status = document.getElementById("assetStatus").value;
-            const newId = "ITM-" + Math.floor(100 + Math.random() * 900);
+            const newId = "AST-" + Math.floor(100 + Math.random() * 900);
 
             // Add the new object to our array
-            inventoryData.push({ id: newId, name: name, user: user, status: status });
+            inventoryData.push({ 
+                asset_id: newId, 
+                name: name, 
+                assigned_to: user || null, 
+                status: status.toLowerCase().replace(' ', '_')
+            });
 
             // Trigger the reflection, clear form, and hide modal
             refreshDashboard();
@@ -88,17 +138,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 5. ACTION BUTTONS (Global functions so the buttons can see them)
-    window.removeAsset = (index) => {
+    window.removeAsset = (assetId) => {
         if(confirm("Confirm removal from database?")) {
-            inventoryData.splice(index, 1);
+            inventoryData = inventoryData.filter(item => item.asset_id !== assetId);
             refreshDashboard();
         }
     };
 
-    window.markAsComplete = (index) => {
-        // Change status to Operational (Completed) and refresh
-        inventoryData[index].status = "Operational";
-        refreshDashboard();
+    window.markAsComplete = (assetId) => {
+        // Change status to available and refresh
+        const item = inventoryData.find(item => item.asset_id === assetId);
+        if (item) {
+            item.status = "available";
+            item.assigned_to = null;
+            refreshDashboard();
+        }
     };
 
     // 6. MODAL & LOGOUT CONTROLS

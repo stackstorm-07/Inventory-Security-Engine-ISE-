@@ -144,8 +144,9 @@ document.addEventListener("DOMContentLoaded", () => {
           alert("Security Alert: " + data.error);
         } else {
           alert("Authentication successful. Welcome!");
-          // Let the dashboard know we are authorized
-          localStorage.setItem("token", "logged-in"); 
+          // Store JWT token and user info
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
           window.location.href = "dashboard.html";
         }
       })

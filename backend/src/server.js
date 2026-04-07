@@ -2,6 +2,7 @@ const https = require('https');
 const fs = require('fs');
 const app = require('./app');
 const pool = require('./config/db');
+const initializeDatabase = require('./initDb');
 require('dotenv').config({ path: './.env' });
 
 const PORT = process.env.PORT || 5000;
@@ -12,6 +13,9 @@ async function startServer() {
     const conn = await pool.getConnection();
     console.log('✅ Database connected');
     conn.release();
+
+    // Initialize database tables and sample data
+    await initializeDatabase();
 
     app.listen(PORT, () => {
       console.log(`🔐 HTTP running on http://localhost:${PORT}`);

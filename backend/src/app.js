@@ -6,6 +6,7 @@ const path = require('path');
 
 // Auth routes
 const authRoutes = require('./routes/authRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Middleware imports
 const { verifyToken } = require('./middleware/auth');
@@ -29,6 +30,7 @@ app.get('/api-status', (req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Protected routes
 app.get('/api/dashboard', verifyToken, requireRole('admin', 'manager', 'user'), (req, res) => {
