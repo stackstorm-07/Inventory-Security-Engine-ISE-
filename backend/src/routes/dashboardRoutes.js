@@ -87,6 +87,78 @@ router.get('/access-control', verifyToken, requireRole('admin'), async (req, res
   }
 });
 
+// Create a new user (admin only)
+router.post('/access-control', verifyToken, requireRole('admin'), async (req, res) => {
+  const { full_name, username, email, phone, password, role } = req.body;
+
+  if (!full_name || !username || !email || !password || !role) {
+    return res.status(400).json({ error: 'All fields are required.' });
+  }
+
+  if (!['admin', 'staff', 'viewer'].includes(role)) {
+    return res.status(400).json({ error: 'Role must be admin, staff, or viewer.' });
+  }
+
+  try {
+    const bcrypt = require('bcrypt');
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const conn = await pool.getConnection();
+    const query = `
+      INSERT INTO users (full_name, username, email, phone, password_hash, role, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, 1)
+    `;
+    await conn.query(query, [full_name, username, email, phone, hashedPassword, role]);
+    conn.release();
+
+    res.status(201).json({ message: 'User created successfully.' });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Username or email already exists.' });
+    }
+    res.status(500).json({ error: 'Failed to create user.' });
+  }
+});
+
+// Get assigned tasks for staff and all complaints for admin
+router.get('/assigned-complaints', verifyToken, requireRole('admin', 'staff'), async (req, res) => {
+  try {
+    const conn = await pool.getConnection();
+    let query;
+    let params = [];
+
+    if (req.user.role === 'staff') {
+      query = `
+        SELECT c.*, u.username as submitted_by, s.username as assigned_staff
+        FROM complaints c
+        LEFT JOIN users u ON c.user_id = u.id
+        LEFT JOIN users s ON c.assigned_staff_id = s.id
+        WHERE c.assigned_staff_id = ?
+        ORDER BY c.created_at DESC
+      `;
+      params = [req.user.id];
+    } else {
+      query = `
+        SELECT c.*, u.username as submitted_by, s.username as assigned_staff
+        FROM complaints c
+        LEFT JOIN users u ON c.user_id = u.id
+        LEFT JOIN users s ON c.assigned_staff_id = s.id
+        ORDER BY c.created_at DESC
+      `;
+    }
+
+    const complaints = await conn.query(query, params);
+    conn.release();
+
+    res.json(complaints);
+  } catch (error) {
+    console.error('Error fetching assigned complaints:', error);
+    res.status(500).json({ error: 'Failed to fetch assigned complaints' });
+  }
+});
+
 // Update user role/2FA status - admin only
 router.put('/access-control/:id', verifyToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;

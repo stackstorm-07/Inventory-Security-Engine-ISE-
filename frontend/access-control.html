@@ -280,6 +280,65 @@
         .edit-btn:hover {
             background-color: #eff6ff;
         }
+
+        .create-user-box {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .create-user-box h4 {
+            margin: 0 0 1rem 0;
+            font-size: 1rem;
+            color: #111827;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-row input,
+        .form-row select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .form-row label {
+            font-size: 0.85rem;
+            color: #374151;
+            display: block;
+            margin-bottom: 0.35rem;
+            font-weight: 500;
+        }
+
+        .create-user-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .create-user-message {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .create-user-message.success {
+            color: #166534;
+        }
+
+        .create-user-message.error {
+            color: #b91c1c;
+        }
     </style>
 </head>
 <body>
@@ -313,8 +372,53 @@
 
         <!-- User Management Tab -->
         <div id="users-tab" class="tab-content active">
+            <div class="create-user-box" id="createUserBox" style="display: none;">
+                <h4>Create New Staff or Viewer User</h4>
+                <form id="createUserForm">
+                    <div class="form-row">
+                        <div>
+                            <label for="createFullName">Full Name</label>
+                            <input type="text" id="createFullName" required>
+                        </div>
+                        <div>
+                            <label for="createUsername">Username</label>
+                            <input type="text" id="createUsername" required>
+                        </div>
+                        <div>
+                            <label for="createEmail">Email</label>
+                            <input type="email" id="createEmail" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label for="createPhone">Phone</label>
+                            <input type="text" id="createPhone" placeholder="Optional">
+                        </div>
+                        <div>
+                            <label for="createRole">Role</label>
+                            <select id="createRole" required>
+                                <option value="staff" selected>Staff</option>
+                                <option value="viewer">Viewer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="createPassword">Password</label>
+                            <input type="password" id="createPassword" required>
+                        </div>
+                    </div>
+                    <div class="create-user-actions">
+                        <button type="submit" class="action-btn edit-btn">Create User</button>
+                        <button type="button" class="action-btn" id="cancelCreateUserBtn">Cancel</button>
+                    </div>
+                    <div id="createUserMessage" class="create-user-message"></div>
+                </form>
+            </div>
             <div class="table-container">
-                <h3>User Access Management</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3>User Access Management</h3>
+                    <button id="showCreateUserBtn" class="action-btn edit-btn">Create New User</button>
+                </div>
                 <table id="accessControlTable">
                     <thead>
                         <tr>

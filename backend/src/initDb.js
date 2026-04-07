@@ -126,26 +126,55 @@ async function insertSampleData(conn) {
   try {
     const bcrypt = require('bcrypt');
 
-    // Check if any admin exists
-    const adminCheck = await conn.query('SELECT COUNT(*) as count FROM users WHERE role = "admin"');
+    // Remove old default admin
+    await conn.query(`DELETE FROM users WHERE username = 'admin'`);
+
+    // Seed admin users
+    const saltRounds = 10;
+    const adminPassword = await bcrypt.hash('380011', saltRounds);
+    const adminUsers = [
+      { full_name: 'Administrator 1', username: 'AU2420148' },
+      { full_name: 'Administrator 2', username: 'AU2420149' },
+      { full_name: 'Administrator 3', username: 'AU2420150' }
+    ];
+
+    const adminValues = adminUsers.map(user => [user.full_name, user.username, `${user.username}@company.com`, null, adminPassword, 'admin', 1]);
+    const adminPlaceholders = adminValues.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+    await conn.query(
+      `INSERT IGNORE INTO users (full_name, username, email, phone, password_hash, role, is_active) VALUES ${adminPlaceholders}`,
+      adminValues.flat()
+    );
+
+    // Seed staff users
+    const staffPassword = await bcrypt.hash('380010', saltRounds);
+    const staffUsers = [
+      { full_name: 'Staff Member 1', username: 'AU0000001' },
+      { full_name: 'Staff Member 2', username: 'AU0000002' },
+      { full_name: 'Staff Member 3', username: 'AU0000003' },
+      { full_name: 'Staff Member 4', username: 'AU0000004' },
+      { full_name: 'Staff Member 5', username: 'AU0000005' },
+      { full_name: 'Staff Member 6', username: 'AU0000006' },
+      { full_name: 'Staff Member 7', username: 'AU0000007' },
+      { full_name: 'Staff Member 8', username: 'AU0000008' },
+      { full_name: 'Staff Member 9', username: 'AU0000009' },
+      { full_name: 'Staff Member 10', username: 'AU0000010' },
+      { full_name: 'Staff Member 11', username: 'AU0000011' },
+      { full_name: 'Staff Member 12', username: 'AU0000012' }
+    ];
+
+    const staffValues = staffUsers.map(user => [user.full_name, user.username, `${user.username}@company.com`, null, staffPassword, 'staff', 1]);
+    const rowPlaceholders = staffValues.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+    await conn.query(
+      `INSERT IGNORE INTO users (full_name, username, email, phone, password_hash, role, is_active) VALUES ${rowPlaceholders}`,
+      staffValues.flat()
+    );
+
+    console.log('⭐ Admin and staff accounts created:')
+    console.log('   Admins: AU2420148, AU2420149, AU2420150 with password 380011');
+    console.log('   Staff: AU0000001..AU0000012 with password 380010');
+    console.log('   ⚠️  IMPORTANT: Change passwords for production use!');
     
-    if (adminCheck[0].count === 0) {
-      // Seed default admin and staff users
-      const saltRounds = 10;
-      const adminPassword = await bcrypt.hash('Admin@123456', saltRounds);
-      const staffPassword = await bcrypt.hash('Staff@123456', saltRounds);
-      
-      await conn.query(`
-        INSERT IGNORE INTO users (full_name, username, email, phone, password_hash, role, is_active) VALUES
-        ('System Administrator', 'admin', 'admin@company.com', '555-0001', ?, 'admin', 1),
-        ('Staff Manager', 'staff', 'staff@company.com', '555-0002', ?, 'staff', 1)
-      `, [adminPassword, staffPassword]);
-      
-      console.log('⭐ Default admin/staff accounts created:');
-      console.log('   Admin: admin@company.com / Admin@123456');
-      console.log('   Staff: staff@company.com / Staff@123456');
-      console.log('   ⚠️  IMPORTANT: Change these passwords after first login!');
-    }
+    // Insert sample inventory logs
     
     // Insert sample inventory logs
     await conn.query(`

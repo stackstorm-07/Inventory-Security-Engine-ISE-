@@ -34,16 +34,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Add Complaints link for viewers only
-    if (userRole === 'viewer') {
-        const navLinksContainer = document.querySelector('.nav-links');
-        if (navLinksContainer) {
-            const complaintsLink = document.createElement('a');
-            complaintsLink.href = 'complaints.html';
-            complaintsLink.className = 'nav-item';
-            complaintsLink.textContent = 'Complaints';
-            navLinksContainer.insertBefore(complaintsLink, navLinksContainer.lastElementChild);
-        }
+    // Add Complaints / Tasks link based on role
+    const navLinksContainer = document.querySelector('.nav-links');
+    if (navLinksContainer) {
+        const taskLink = document.createElement('a');
+        taskLink.href = 'complaints.html';
+        taskLink.className = 'nav-item';
+        taskLink.textContent = userRole === 'viewer' ? 'Complaints' : 'Tasks';
+        navLinksContainer.insertBefore(taskLink, navLinksContainer.lastElementChild);
     }
 
     // 1. ELEMENT SELECTORS

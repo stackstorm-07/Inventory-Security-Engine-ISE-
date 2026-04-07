@@ -4,6 +4,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const complaintsTableBody = document.querySelector("#complaintsTable tbody");
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+    const showCreateUserBtn = document.getElementById('showCreateUserBtn');
+    const cancelCreateUserBtn = document.getElementById('cancelCreateUserBtn');
+    const createUserBox = document.getElementById('createUserBox');
+    const createUserForm = document.getElementById('createUserForm');
+    const createUserMessage = document.getElementById('createUserMessage');
 
     // Check authentication
     const token = localStorage.getItem("token");
@@ -43,6 +48,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load initial data (users tab is active by default)
     loadAccessControl();
+
+    if (showCreateUserBtn) {
+        showCreateUserBtn.addEventListener('click', () => {
+            if (createUserBox) {
+                createUserBox.style.display = 'block';
+            }
+        });
+    }
+
+    if (cancelCreateUserBtn) {
+        cancelCreateUserBtn.addEventListener('click', () => {
+            if (createUserBox) {
+                createUserBox.style.display = 'none';
+            }
+            if (createUserMessage) {
+                createUserMessage.textContent = '';
+                createUserMessage.className = 'create-user-message';
+            }
+            if (createUserForm) createUserForm.reset();
+        });
+    }
+
+    if (createUserForm) {
+        createUserForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const full_name = document.getElementById('createFullName').value.trim();
+            const username = document.getElementById('createUsername').value.trim();
+            const email = document.getElementById('createEmail').value.trim();
+            const phone = document.getElementById('createPhone').value.trim();
+            const role = document.getElementById('createRole').value;
+            const password = document.getElementById('createPassword').value;
+
+            if (!full_name || !username || !email || !role || !password) {
+                displayCreateUserMessage('Please complete all fields.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/dashboard/access-control', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ full_name, username, email, phone, role, password })
+                });
+
+                if (response.ok) {
+                    displayCreateUserMessage('User created successfully.', 'success');
+                    createUserForm.reset();
+                    loadAccessControl();
+                } else {
+                    const errorData = await response.json();
+                    displayCreateUserMessage(errorData.error || 'Failed to create user.', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating user:', error);
+                displayCreateUserMessage('Failed to create user. Please try again.', 'error');
+            }
+        });
+    }
 
     // Logout functionality
     if (logoutBtn) {
@@ -256,6 +323,12 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error('Error updating complaint:', error);
             alert('Error updating complaint');
         }
+    }
+
+    function displayCreateUserMessage(message, type) {
+        if (!createUserMessage) return;
+        createUserMessage.textContent = message;
+        createUserMessage.className = `create-user-message ${type}`;
     }
 
     function escapeHtml(text) {
