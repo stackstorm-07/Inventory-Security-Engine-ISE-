@@ -28,7 +28,7 @@ async function initializeDatabase() {
         email VARCHAR(255) UNIQUE NOT NULL,
         phone VARCHAR(20),
         password_hash VARCHAR(255) NOT NULL,
-        role ENUM('admin', 'manager', 'user') DEFAULT 'user',
+        role ENUM('admin', 'staff', 'viewer') DEFAULT 'viewer',
         totp_secret VARCHAR(255),
         is_2fa_enabled BOOLEAN DEFAULT FALSE,
         is_active BOOLEAN DEFAULT TRUE,
@@ -81,6 +81,35 @@ async function initializeDatabase() {
       )
     `);
 
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        token VARCHAR(255) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create complaints table for user feedback system
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS complaints (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        category ENUM('system_error', 'data_issue', 'access_problem', 'performance', 'feature_request', 'other') NOT NULL,
+        priority ENUM('low', 'medium', 'high', 'urgent') NOT NULL,
+        description TEXT NOT NULL,
+        status ENUM('pending', 'in_progress', 'resolved', 'closed') DEFAULT 'pending',
+        assigned_staff_id INT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (assigned_staff_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
+
     console.log('Tables created successfully');
 
     // Insert sample data
@@ -95,7 +124,28 @@ async function initializeDatabase() {
 
 async function insertSampleData(conn) {
   try {
-    // Skip dummy user insertion - keeping only manually added users
+    const bcrypt = require('bcrypt');
+
+    // Check if any admin exists
+    const adminCheck = await conn.query('SELECT COUNT(*) as count FROM users WHERE role = "admin"');
+    
+    if (adminCheck[0].count === 0) {
+      // Seed default admin and staff users
+      const saltRounds = 10;
+      const adminPassword = await bcrypt.hash('Admin@123456', saltRounds);
+      const staffPassword = await bcrypt.hash('Staff@123456', saltRounds);
+      
+      await conn.query(`
+        INSERT IGNORE INTO users (full_name, username, email, phone, password_hash, role, is_active) VALUES
+        ('System Administrator', 'admin', 'admin@company.com', '555-0001', ?, 'admin', 1),
+        ('Staff Manager', 'staff', 'staff@company.com', '555-0002', ?, 'staff', 1)
+      `, [adminPassword, staffPassword]);
+      
+      console.log('⭐ Default admin/staff accounts created:');
+      console.log('   Admin: admin@company.com / Admin@123456');
+      console.log('   Staff: staff@company.com / Staff@123456');
+      console.log('   ⚠️  IMPORTANT: Change these passwords after first login!');
+    }
     
     // Insert sample inventory logs
     await conn.query(`

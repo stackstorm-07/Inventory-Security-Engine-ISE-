@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     const logoutBtn = document.getElementById("logoutBtn");
     const tableBody = document.querySelector("#accessControlTable tbody");
+    const complaintsTableBody = document.querySelector("#complaintsTable tbody");
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
 
     // Check authentication
     const token = localStorage.getItem("token");
@@ -11,7 +14,34 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // Load access control data
+    // Role-based UI hiding (though this page is admin-only, keeping consistent)
+    if (user.role) {
+        // All navigation should be visible for admins on this page
+        // No hiding needed as this is an admin-only page
+    }
+
+    // Tab switching functionality
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active class from all tabs
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            // Add active class to clicked tab
+            btn.classList.add('active');
+            const tabId = btn.getAttribute('data-tab');
+            document.getElementById(tabId + '-tab').classList.add('active');
+
+            // Load data for the active tab
+            if (tabId === 'users') {
+                loadAccessControl();
+            } else if (tabId === 'complaints') {
+                loadComplaints();
+            }
+        });
+    });
+
+    // Load initial data (users tab is active by default)
     loadAccessControl();
 
     // Logout functionality
@@ -89,9 +119,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Global functions for button clicks
     window.editUser = (userId, currentRole, current2FA, currentActive) => {
-        const newRole = prompt('Enter new role (admin/manager/user):', currentRole);
-        if (!newRole || !['admin', 'manager', 'user'].includes(newRole)) {
-            alert('Invalid role. Must be admin, manager, or user.');
+        const newRole = prompt('Enter new role (admin/staff/viewer):', currentRole);
+        if (!newRole || !['admin', 'staff', 'viewer'].includes(newRole)) {
+            alert('Invalid role. Must be admin, staff, or viewer.');
             return;
         }
 
@@ -106,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.revokeUser = (userId) => {
         if (!confirm('Are you sure you want to revoke this user\'s access?')) return;
-        updateUser(userId, 'user', 0, 0);
+        updateUser(userId, 'viewer', 0, 0);
     };
 
     async function updateUser(userId, role, is2FAEnabled, isActive) {
@@ -129,5 +159,108 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error('Error updating user:', error);
             alert('Error updating user');
         }
+    }
+
+    async function loadComplaints() {
+        try {
+            const response = await fetch('http://localhost:5000/api/dashboard/complaints', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                window.location.href = "login.html";
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch complaints');
+            }
+
+            const complaints = await response.json();
+            displayComplaints(complaints);
+
+        } catch (error) {
+            console.error('Error loading complaints:', error);
+            complaintsTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: red;">Error loading complaints. Please try again.</td></tr>';
+        }
+    }
+
+    function displayComplaints(complaints) {
+        if (!complaints || complaints.length === 0) {
+            complaintsTableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No complaints found.</td></tr>';
+            return;
+        }
+
+        complaintsTableBody.innerHTML = complaints.map(complaint => {
+            const createdAt = complaint.created_at ? new Date(complaint.created_at).toLocaleString() : 'Unknown';
+            const statusClass = `status-${complaint.status.toLowerCase().replace(' ', '-')}`;
+            const priorityClass = `priority-${complaint.priority.toLowerCase()}`;
+
+            return `
+                <tr>
+                    <td>${complaint.id}</td>
+                    <td>${escapeHtml(complaint.submitted_by)}</td>
+                    <td>${escapeHtml(complaint.title)}</td>
+                    <td><span class="category-badge">${complaint.category.replace('_', ' ')}</span></td>
+                    <td><span class="priority-badge ${priorityClass}">${complaint.priority}</span></td>
+                    <td><span class="status-badge ${statusClass}">${complaint.status.replace('_', ' ')}</span></td>
+                    <td>${complaint.assigned_staff || 'Unassigned'}</td>
+                    <td>${createdAt}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="manageComplaint(${complaint.id}, '${complaint.status}', ${complaint.assigned_staff_id || 'null'})">Manage</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Global function for complaint management
+    window.manageComplaint = (complaintId, currentStatus, currentAssigned) => {
+        const newStatus = prompt('Enter new status (pending/in_progress/resolved/closed):', currentStatus);
+        if (!newStatus || !['pending', 'in_progress', 'resolved', 'closed'].includes(newStatus)) {
+            alert('Invalid status. Must be pending, in_progress, resolved, or closed.');
+            return;
+        }
+
+        const assignedStaffId = prompt('Enter assigned staff ID (leave empty to unassign):', currentAssigned || '');
+        const finalAssignedId = assignedStaffId && assignedStaffId.trim() ? parseInt(assignedStaffId) : null;
+
+        updateComplaint(complaintId, newStatus, finalAssignedId);
+    };
+
+    async function updateComplaint(complaintId, status, assignedStaffId) {
+        try {
+            const response = await fetch(`http://localhost:5000/api/dashboard/complaints/${complaintId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status, assigned_staff_id: assignedStaffId })
+            });
+
+            if (response.ok) {
+                loadComplaints(); // Reload complaints
+                alert('Complaint updated successfully');
+            } else {
+                const errorData = await response.json();
+                alert('Failed to update complaint: ' + (errorData.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error updating complaint:', error);
+            alert('Error updating complaint');
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 });

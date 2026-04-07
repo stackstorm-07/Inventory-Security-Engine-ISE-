@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Complaints - Inventory Security Engine</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 0;
+            color: #1f2937;
+        }
+
+        /* Top Navigation Bar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 0 2rem;
+            height: 64px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            height: 100%;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            color: #4b5563;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-item.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        .nav-item:hover {
+            color: #111827;
+        }
+
+        .logout-btn {
+            background-color: transparent;
+            border: 1px solid #d1d5db;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #dc2626;
+            transition: 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #fef2f2;
+            border-color: #dc2626;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .page-header p {
+            color: #6b7280;
+            margin: 0;
+        }
+
+        /* Complaint Form */
+        .complaint-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .submit-btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .submit-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* Success/Error Messages */
+        .message {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        /* Complaint History */
+        .complaint-history {
+            margin-top: 2rem;
+        }
+
+        .complaint-history h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #111827;
+        }
+
+        .complaint-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            border-left: 4px solid #2563eb;
+        }
+
+        .complaint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .complaint-title {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .complaint-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-in-progress {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-resolved {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .complaint-date {
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+
+        .complaint-description {
+            color: #4b5563;
+            margin: 0.5rem 0;
+        }
+
+        .complaint-assigned {
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">Inventory Security Engine</div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="inventory-logs.html" class="nav-item">Inventory Logs</a>
+            <a href="complaints.html" class="nav-item active">Complaints</a>
+        </div>
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Report System Issues</h1>
+            <p>Submit complaints about system faults or request assistance from administrators</p>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <form class="complaint-form" id="complaintForm">
+            <div class="form-group">
+                <label for="complaintTitle">Issue Title *</label>
+                <input type="text" id="complaintTitle" placeholder="Brief description of the issue" required>
+            </div>
+
+            <div class="form-group">
+                <label for="complaintCategory">Category *</label>
+                <select id="complaintCategory" required>
+                    <option value="">Select a category</option>
+                    <option value="system_error">System Error</option>
+                    <option value="data_issue">Data Issue</option>
+                    <option value="access_problem">Access Problem</option>
+                    <option value="performance">Performance Issue</option>
+                    <option value="feature_request">Feature Request</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="complaintPriority">Priority *</label>
+                <select id="complaintPriority" required>
+                    <option value="">Select priority</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="complaintDescription">Detailed Description *</label>
+                <textarea id="complaintDescription" placeholder="Please provide detailed information about the issue, including steps to reproduce if applicable..." required></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">Submit Complaint</button>
+        </form>
+
+        <div class="complaint-history">
+            <h2>Your Previous Complaints</h2>
+            <div id="complaintsList">
+                <p style="color: #6b7280; text-align: center; padding: 2rem;">Loading your complaints...</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/complaints.js"></script>
+</body>
+</html>
