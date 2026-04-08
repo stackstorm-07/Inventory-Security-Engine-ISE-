@@ -82,7 +82,7 @@ document.getElementById('requestTokenForm').addEventListener('submit', async (e)
         const data = await response.json();
 
         if (response.ok) {
-            alert(`Success! Your reset code is: ${data.resetCode}\n\n(In production, this will be emailed silently).`);
+            alert(`Please check your email inbox for your password reset code.`);
             
             document.getElementById('requestTokenSection').style.display = 'none';
             document.getElementById('resetPasswordSection').style.display = 'block';
@@ -91,7 +91,7 @@ document.getElementById('requestTokenForm').addEventListener('submit', async (e)
             // Auto-fill the identifier in the second form
             document.getElementById('resetIdentifier').value = identifier;
         } else {
-            alert(data.error || "An error occurred. Account might not exist.");
+            alert(data.error || "An error occurred. Account not exist.");
             generateCaptcha(); // Refresh captcha on failure
             document.getElementById('captchaInput').value = "";
         }
@@ -133,9 +133,10 @@ document.getElementById('resetPasswordForm').addEventListener('submit', async (e
 
         const data = await response.json();
 
-        if (response.ok) {
-            alert("Password successfully reset! You will now be redirected to the login page.");
-            window.location.href = 'login.html'; 
+       if (response.ok) {
+            alert("Password reset successfully!"); // 👈 Updated alert
+            
+            document.getElementById('requestTokenSection').style.display = 'none';
         } else {
             alert(data.error || "Invalid token or token expired.");
         }

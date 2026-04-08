@@ -3,8 +3,19 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const nodemailer = require('nodemailer'); // ✅ IMPORTED NODEMAILER
 
 const router = express.Router();
+
+// --- EMAIL TRANSPORTER SETUP ---
+// ✅ ADD YOUR GMAIL AND APP PASSWORD HERE
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'inventorysecurityengine@gmail.com', // 👈 Put your real Gmail address here
+    pass: 'qbdlupbfjhzlvefn' // 👈 Put your 16-character app password here (no spaces)
+  }
+});
 
 // Store CAPTCHA answers temporarily (in production, use Redis or database)
 const captchaStore = new Map();
@@ -88,9 +99,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// 3. FORGOT PASSWORD - create reset token (Accepts Username OR Email)
+// 3. FORGOT PASSWORD - create reset token & SEND EMAIL
 router.post('/forgot-password', async (req, res) => {
-  const { identifier } = req.body; // Changed from 'username' to 'identifier'
+  const { identifier } = req.body; 
 
   if (!identifier) {
     return res.status(400).json({ error: 'Username or email is required.' });
@@ -98,12 +109,15 @@ router.post('/forgot-password', async (req, res) => {
 
   try {
     const conn = await pool.getConnection();
-    // Check for either username OR email
-    const [user] = await conn.query('SELECT id, username FROM users WHERE username = ? OR email = ?', [identifier, identifier]);
+    
+    // ✅ ADDED 'email' to the SELECT query so we know where to send the code
+    const users = await conn.query('SELECT id, username, email FROM users WHERE username = ? OR email = ?', [identifier, identifier]);
+    const user = users[0];
     
     if (!user) {
       conn.release();
-      return res.status(404).json({ error: 'Account not found.' });
+      // ✅ Security best practice: Don't tell hackers if an account exists or not
+      return res.status(200).json({ message: 'If an account exists, a reset code has been sent to the registered email.' });
     }
 
     await conn.query(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -122,7 +136,30 @@ router.post('/forgot-password', async (req, res) => {
     await conn.query('INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)', [user.id, resetCode, expiresAt]);
     conn.release();
 
-    res.status(200).json({ message: 'Password reset code created successfully.', resetCode });
+    // ✅ SEND THE ACTUAL EMAIL VIA NODEMAILER
+    const mailOptions = {
+      from: 'YOUR_EMAIL@gmail.com', // 👈 Put your Gmail address here
+      to: user.email, // Sends to the user's email pulled from the database
+      subject: 'Your Password Reset Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <div style="max-width: 500px; margin: auto; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <h2 style="color: #6a1b9a; text-align: center;">Password Reset Request</h2>
+                <p>Hello <strong>${user.username}</strong>,</p>
+                <p>You requested to reset your password. Your authorization code is:</p>
+                <h1 style="color: #1e293b; background: #fff; padding: 15px; text-align: center; border-radius: 5px; border: 1px dashed #cbd5e1; letter-spacing: 3px;">${resetCode}</h1>
+                <p>This code will expire in 15 minutes.</p>
+                <p style="font-size: 12px; color: #64748b; margin-top: 20px;">If you did not request a password reset, please ignore this email securely.</p>
+            </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    // ✅ SECURE RESPONSE: We no longer send the code back to the browser
+    res.status(200).json({ message: 'If an account exists, a reset code has been sent to the registered email.' });
+    
   } catch (error) {
     console.error('Forgot Password Error:', error);
     res.status(500).json({ error: 'Failed to process password reset request.' });
