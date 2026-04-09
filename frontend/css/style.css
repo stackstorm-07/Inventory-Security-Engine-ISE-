@@ -484,7 +484,7 @@ h1 {
 
 /* ── FOOTER ────────────────────────────────────────────────────── */
 footer {
-  background: var(--surface-light);
+  background: var(--bg-dark);
   border-top: 1px solid var(--border-light);
   padding: 5rem 2.5rem 2rem;
 }
