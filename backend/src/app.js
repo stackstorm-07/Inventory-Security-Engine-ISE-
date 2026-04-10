@@ -1,42 +1,48 @@
 const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const path = require('path');
+const cors    = require('cors');
+const helmet  = require('helmet');
+const morgan  = require('morgan');
+const path    = require('path');
 
-// Auth routes
-const authRoutes = require('./routes/authRoutes');
+// ── Existing routes (UNCHANGED) ──────────────────────────
+const authRoutes      = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 
-// Middleware imports
-const { verifyToken } = require('./middleware/auth');
-const { requireRole } = require('./middleware/rbac');
+// ── NEW: orders & trades admin routes ────────────────────
+const ordersAdminRoutes = require('./routes/ordersAdminRoutes');
+
+// ── Existing middleware (UNCHANGED) ──────────────────────
+const { verifyToken }      = require('./middleware/auth');
+const { requireRole }      = require('./middleware/rbac');
+const sqlInjectionDetector = require('./middleware/sqlInjectionDetector');
 
 const app = express();
 
-// Security and utility middleware
+// ── Core security middleware (UNCHANGED) ─────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Serve the frontend folder
+// ── SQL Injection Detector (added in previous step) ──────
+app.use(sqlInjectionDetector);
+
+// ── Static frontend (UNCHANGED) ──────────────────────────
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
-// Test route
+// ── Health check (UNCHANGED) ─────────────────────────────
 app.get('/api-status', (req, res) => {
   res.send('API is running...');
 });
 
-// Auth routes
-app.use('/api/auth', authRoutes);
+// ── Existing API routes (UNCHANGED) ──────────────────────
+app.use('/api/auth',      authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-// Protected routes
-app.get('/api/dashboard', verifyToken, requireRole('admin', 'staff', 'viewer'), (req, res) => {
-  res.json({ message: `Welcome ${req.user.username}! Role: ${req.user.role}` });
-});
+// ── NEW: Admin orders & trades management ────────────────
+app.use('/api/orders', ordersAdminRoutes);
 
+// ── Existing protected routes (UNCHANGED) ────────────────
 app.get('/api/admin', verifyToken, requireRole('admin'), (req, res) => {
   res.json({ message: 'Admin only area' });
 });

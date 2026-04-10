@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Orders & Trades — Admin | ISE</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    :root {
+      --blue:   #2563eb;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --gray:   #6b7280;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f3f4f6; margin: 0; color: #1f2937; }
+
+    /* ── Navbar ─────────────────────────────── */
+    .navbar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fff; padding: 0 2rem; height: 64px;
+      border-bottom: 1px solid #e5e7eb;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .navbar-brand { font-size: 1.05rem; font-weight: 700; color: #111827; }
+    .nav-links    { display: flex; gap: 1.75rem; height: 100%; }
+    .nav-item {
+      text-decoration: none; color: #4b5563; font-size: .875rem; font-weight: 500;
+      display: flex; align-items: center; gap: .3rem;
+      border-bottom: 2px solid transparent; transition: .2s;
+    }
+    .nav-item.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .nav-item:hover  { color: #111827; }
+    .nav-badge {
+      background: var(--red); color: #fff;
+      font-size: .62rem; font-weight: 700;
+      padding: .1rem .42rem; border-radius: 999px;
+      animation: blink 1.4s infinite;
+      display: none;
+    }
+    @keyframes blink { 50% { opacity: .4; } }
+    .logout-btn {
+      background: transparent; border: 1px solid #d1d5db;
+      padding: .4rem 1rem; border-radius: 6px; cursor: pointer;
+      font-weight: 500; color: var(--red); transition: .2s;
+    }
+    .logout-btn:hover { background: #fef2f2; border-color: var(--red); }
+
+    /* ── Layout ──────────────────────────────── */
+    .main  { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+    .ph    { margin-bottom: 1.5rem; }
+    .ph h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+    .ph p  { color: var(--gray); margin: 0; font-size: .875rem; }
+
+    /* ── Stat cards ───────────────────────────── */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+    .sc    { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; padding: 1rem 1.25rem; }
+    .sc-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; color: var(--gray); margin-bottom: .25rem; }
+    .sc-value { font-size: 1.8rem; font-weight: 700; color: #111827; }
+    .sc-value.orange { color: var(--orange); }
+    .sc-value.green  { color: var(--green); }
+    .sc-value.red    { color: var(--red); }
+    .sc-value.blue   { color: var(--blue); }
+    .sc-value.purple { color: var(--purple); }
+
+    /* ── Tabs ────────────────────────────────── */
+    .tabs     { display: flex; gap: .5rem; margin-bottom: 1.25rem; border-bottom: 1px solid #e5e7eb; }
+    .tab-btn  {
+      background: none; border: none; padding: .75rem 1.25rem;
+      cursor: pointer; font-weight: 500; color: var(--gray);
+      border-bottom: 2px solid transparent; font-size: .875rem;
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .tab-btn.active  { color: var(--blue); border-bottom-color: var(--blue); }
+    .panel           { display: none; }
+    .panel.active    { display: block; }
+
+    /* ── Filter bar ──────────────────────────── */
+    .filter-bar  { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+    .fb-btn      {
+      padding: .35rem .9rem; border-radius: 999px;
+      border: 1px solid #d1d5db; background: #fff;
+      font-size: .78rem; font-weight: 500; cursor: pointer;
+      color: #374151; transition: .15s;
+    }
+    .fb-btn:hover, .fb-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .refresh-btn {
+      margin-left: auto; padding: .35rem .85rem; border-radius: 6px;
+      border: 1px solid #d1d5db; background: #fff; font-size: .78rem;
+      cursor: pointer; color: #374151; display: flex; align-items: center; gap: .35rem;
+    }
+    .refresh-btn:hover { background: #f3f4f6; }
+    .live { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 50% { opacity: .3; } }
+
+    /* ── Table ───────────────────────────────── */
+    .tbl-wrap { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    thead tr { background: #f9fafb; }
+    th {
+      padding: .75rem 1rem; text-align: left;
+      font-size: .72rem; font-weight: 600; text-transform: uppercase;
+      color: var(--gray); border-bottom: 1px solid #e5e7eb;
+    }
+    td { padding: .85rem 1rem; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .user-cell   { font-weight: 600; }
+    .sub-cell    { font-size: .78rem; color: var(--gray); margin-top: .15rem; }
+    .asset-id    { font-family: monospace; background: #f3f4f6; padding: .1rem .4rem; border-radius: 4px; font-size: .78rem; }
+
+    /* Status badges */
+    .badge {
+      display: inline-block; padding: .2rem .65rem; border-radius: 999px;
+      font-size: .7rem; font-weight: 700; text-transform: uppercase; white-space: nowrap;
+    }
+    .b-pending   { background: #fef3c7; color: #92400e; }
+    .b-approved  { background: #dbeafe; color: #1e40af; }
+    .b-fulfilled { background: #dcfce7; color: var(--green); }
+    .b-rejected  { background: #f3f4f6; color: #374151; }
+    .b-cancelled { background: #f3f4f6; color: #374151; }
+    .b-completed { background: #dcfce7; color: var(--green); }
+
+    /* Action buttons */
+    .btn-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .5rem; }
+    .btn {
+      padding: .38rem .85rem; border-radius: 6px; font-size: .78rem;
+      font-weight: 500; cursor: pointer; border: 1px solid transparent;
+      transition: .15s; white-space: nowrap;
+    }
+    .btn-approve  { background: #dbeafe; color: var(--blue);  border-color: #bfdbfe; }
+    .btn-approve:hover  { background: var(--blue); color: #fff; }
+    .btn-fulfill  { background: #dcfce7; color: var(--green); border-color: #bbf7d0; }
+    .btn-fulfill:hover  { background: var(--green); color: #fff; }
+    .btn-reject   { background: #fee2e2; color: var(--red);   border-color: #fecaca; }
+    .btn-reject:hover   { background: var(--red); color: #fff; }
+    .btn-cancel   { background: #f3f4f6; color: #374151;      border-color: #d1d5db; }
+    .btn-cancel:hover   { background: #e5e7eb; }
+
+    /* Response input inside row */
+    .resp-input {
+      width: 100%; padding: .4rem .6rem;
+      border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: .8rem; margin-bottom: .4rem; resize: none;
+    }
+
+    /* Empty / loading states */
+    .empty { text-align: center; padding: 3rem; color: var(--gray); font-size: .875rem; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: #1f2937; color: #fff;
+      padding: .7rem 1.2rem; border-radius: 8px; font-size: .85rem; font-weight: 500;
+      opacity: 0; transform: translateY(8px); transition: .3s; z-index: 9999; pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.ok   { background: var(--green); }
+    #toast.err  { background: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ──────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="navbar-brand">🔐 Inventory Security Engine</div>
+  <div class="nav-links">
+    <a href="dashboard.html"       class="nav-item">Dashboard</a>
+    <a href="inventory-logs.html"  class="nav-item">Inventory Logs</a>
+    <a href="security-alerts.html" class="nav-item">Security Alerts</a>
+    <a href="access-control.html"  class="nav-item" id="acLink">Access Control</a>
+    <a href="admin-orders.html"    class="nav-item active">
+      Orders &amp; Trades
+      <span class="nav-badge" id="navBadge">0</span>
+    </a>
+    <a href="reports.html"         class="nav-item">Reports</a>
+  </div>
+  <button id="logoutBtn" class="logout-btn">Logout</button>
+</nav>
+
+<!-- ── Main ────────────────────────────────────────────── -->
+<main class="main">
+  <div class="ph">
+    <h1>📦 Orders &amp; Trades Management</h1>
+    <p>Review viewer inventory orders and monitor peer-to-peer asset trades. Fulfilling an order automatically updates the asset and writes an inventory log.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="sc"><div class="sc-label">Pending Orders</div><div class="sc-value orange" id="sPending">—</div></div>
+    <div class="sc"><div class="sc-label">Approved</div><div class="sc-value blue" id="sApproved">—</div></div>
+    <div class="sc"><div class="sc-label">Fulfilled Today</div><div class="sc-value green" id="sFulfilled">—</div></div>
+    <div class="sc"><div class="sc-label">Rejected</div><div class="sc-value red" id="sRejected">—</div></div>
+    <div class="sc"><div class="sc-label">Active Trades</div><div class="sc-value purple" id="sActiveTrades">—</div></div>
+    <div class="sc"><div class="sc-label">Completed Trades</div><div class="sc-value green" id="sCompletedTrades">—</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="orders">
+      📋 Inventory Orders
+      <span class="nav-badge" id="tabBadge" style="display:none;animation:none;background:#ea580c;">0</span>
+    </button>
+    <button class="tab-btn" data-tab="trades">🔄 Viewer Trades</button>
+  </div>
+
+  <!-- Orders panel -->
+  <div id="panel-orders" class="panel active">
+    <div class="filter-bar">
+      <button class="fb-btn active" data-status="all">All</button>
+      <button class="fb-btn"        data-status="pending">🟡 Pending</button>
+      <button class="fb-btn"        data-status="approved">🔵 Approved</button>
+      <button class="fb-btn"        data-status="fulfilled">🟢 Fulfilled</button>
+      <button class="fb-btn"        data-status="rejected">⛔ Rejected</button>
+      <button class="refresh-btn" id="refreshOrders"><span class="live"></span> Refresh</button>
+    </div>
+    <div class="tbl-wrap" id="ordersWrap">
+      <div class="empty">Loading orders…</div>
+    </div>
+  </div>
+
+  <!-- Trades panel -->
+  <div id="panel-trades" class="panel">
+    <div class="filter-bar">
+      <button class="refresh-btn" id="refreshTrades" style="margin-left:0;"><span class="live"></span> Refresh</button>
+    </div>
+    <div class="tbl-wrap" id="tradesWrap">
+      <div class="empty">Loading trades…</div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  ADMIN ORDERS & TRADES — ISE
+// ─────────────────────────────────────────────────────────────
+const API   = 'http://localhost:5000';
+const token = localStorage.getItem('token');
+const user  = JSON.parse(localStorage.getItem('user') || '{}');
+
+if (!token) { window.location.href = 'login.html'; }
+if (!['admin','staff'].includes(user.role)) { window.location.href = 'dashboard.html'; }
+if (user.role !== 'admin') {
+  const l = document.getElementById('acLink');
+  if (l) l.style.display = 'none';
+}
+
+const hdrs = () => ({ 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' });
+
+let currentOrderFilter = 'all';
+let allOrders = [], allTrades = [];
+
+// ── Tabs ─────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+  });
+});
+
+// ── Filter buttons ────────────────────────────────────────
+document.querySelectorAll('.fb-btn[data-status]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fb-btn[data-status]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentOrderFilter = btn.dataset.status;
+    renderOrders();
+  });
+});
+
+document.getElementById('refreshOrders').addEventListener('click', loadOrders);
+document.getElementById('refreshTrades').addEventListener('click', loadTrades);
+document.getElementById('logoutBtn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'login.html'; });
+
+// ── Toast ─────────────────────────────────────────────────
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show' + (type ? ` ${type}` : '');
+  clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 3500);
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Load stats ────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch(`${API}/api/orders/stats`, { headers: hdrs() });
+    if (!res.ok) return;
+    const d = await res.json();
+    const o = d.orders || {}, tr = d.trades || {};
+    document.getElementById('sPending').textContent        = o.pending || 0;
+    document.getElementById('sApproved').textContent       = o.approved || 0;
+    document.getElementById('sFulfilled').textContent      = o.fulfilled_today || 0;
+    document.getElementById('sRejected').textContent       = o.rejected || 0;
+    document.getElementById('sActiveTrades').textContent   = tr.active_trades || 0;
+    document.getElementById('sCompletedTrades').textContent= tr.completed_trades || 0;
+
+    // Nav badge
+    const pending = parseInt(o.pending || 0);
+    const nb = document.getElementById('navBadge');
+    const tb = document.getElementById('tabBadge');
+    if (pending > 0) {
+      nb.textContent = pending; nb.style.display = 'inline-block';
+      tb.textContent = pending; tb.style.display = 'inline-block';
+    } else {
+      nb.style.display = 'none'; tb.style.display = 'none';
+    }
+  } catch {}
+}
+
+// ── Load orders ───────────────────────────────────────────
+async function loadOrders() {
+  document.getElementById('ordersWrap').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await fetch(`${API}/api/orders/all`, { headers: hdrs() });
+    if (res.status === 401) { localStorage.clear(); window.location.href = 'login.html'; return; }
+    if (!res.ok) throw new Error();
+    allOrders = await res.json();
+    renderOrders();
+    loadStats();
+  } catch { document.getElementById('ordersWrap').innerHTML = '<div class="empty">Error loading orders.</div>'; }
+}
+
+function renderOrders() {
+  const wrap = document.getElementById('ordersWrap');
+  const filtered = currentOrderFilter === 'all'
+    ? allOrders
+    : allOrders.filter(o => o.status === currentOrderFilter);
+
+  if (!filtered.length) {
+    wrap.innerHTML = '<div class="empty">No orders for this filter.</div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>#</th><th>Viewer</th><th>Asset</th>
+        <th>Requested</th><th>Status</th><th>Staff Response</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        ${filtered.map(o => orderRow(o)).join('')}
+      </tbody>
+    </table>`;
+
+  // Attach action listeners
+  wrap.querySelectorAll('[data-order-action]').forEach(btn => {
+    btn.addEventListener('click', () => handleOrderAction(btn));
+  });
+}
+
+function orderRow(o) {
+  const badge = `<span class="badge b-${o.status}">${o.status}</span>`;
+  const time  = new Date(o.created_at).toLocaleString();
+  const note  = o.note ? `<div class="sub-cell">Note: ${esc(o.note)}</div>` : '';
+  const resp  = o.staff_response ? `<em style="font-size:.78rem;color:#4b5563;">${esc(o.staff_response)}</em>` : '—';
+
+  let actions = '';
+  if (o.status === 'pending') {
+    actions = `
+      <textarea class="resp-input" rows="2" placeholder="Staff response (optional)…" id="resp-${o.id}"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-approve"  data-order-action="approve"  data-id="${o.id}">✔ Approve</button>
+        <button class="btn btn-fulfill"  data-order-action="fulfill"  data-id="${o.id}">📦 Fulfil</button>
+        <button class="btn btn-reject"   data-order-action="reject"   data-id="${o.id}">✖ Reject</button>
+      </div>`;
+  } else if (o.status === 'approved') {
+    actions = `
+      <textarea class="resp-input" rows="2" placeholder="Staff response (optional)…" id="resp-${o.id}"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-fulfill" data-order-action="fulfill" data-id="${o.id}">📦 Fulfil Now</button>
+        <button class="btn btn-reject"  data-order-action="reject"  data-id="${o.id}">✖ Reject</button>
+      </div>`;
+  }
+
+  return `<tr>
+    <td style="font-size:.78rem;color:var(--gray);">#${o.id}</td>
+    <td>
+      <div class="user-cell">${esc(o.viewer_username)}</div>
+      <div class="sub-cell">${esc(o.viewer_full_name || '')}</div>
+      <div class="sub-cell">${esc(o.viewer_email || '')}</div>
+    </td>
+    <td>
+      <span class="asset-id">${esc(o.asset_id)}</span>
+      <div class="sub-cell">${esc(o.asset_name)}</div>
+      <div class="sub-cell">${esc(o.asset_category || '')}${o.asset_location ? ' · ' + esc(o.asset_location) : ''}</div>
+      ${note}
+    </td>
+    <td style="font-size:.78rem;color:var(--gray);">${new Date(o.created_at).toLocaleString()}</td>
+    <td>${badge}</td>
+    <td style="max-width:160px;">${resp}</td>
+    <td style="min-width:180px;">${actions}</td>
+  </tr>`;
+}
+
+async function handleOrderAction(btn) {
+  const id     = btn.dataset.id;
+  const action = btn.dataset.orderAction;
+  const respEl = document.getElementById(`resp-${id}`);
+  const staff_response = respEl ? respEl.value.trim() || null : null;
+
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    const res = await fetch(`${API}/api/orders/${id}/${action}`, {
+      method: 'PATCH',
+      headers: hdrs(),
+      body: JSON.stringify({ staff_response })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { toast(data.error || 'Action failed', 'err'); return; }
+    toast(data.message || 'Done ✔', 'ok');
+    await loadOrders();
+  } catch { toast('Network error', 'err'); }
+  finally { btn.disabled = false; }
+}
+
+// ── Load trades ───────────────────────────────────────────
+async function loadTrades() {
+  document.getElementById('tradesWrap').innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    const res = await fetch(`${API}/api/orders/trades`, { headers: hdrs() });
+    if (res.status === 401) { localStorage.clear(); window.location.href = 'login.html'; return; }
+    if (!res.ok) throw new Error();
+    allTrades = await res.json();
+    renderTrades();
+  } catch { document.getElementById('tradesWrap').innerHTML = '<div class="empty">Error loading trades.</div>'; }
+}
+
+function renderTrades() {
+  const wrap = document.getElementById('tradesWrap');
+  if (!allTrades.length) {
+    wrap.innerHTML = '<div class="empty">No trades found.</div>';
+    return;
+  }
+  wrap.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>#</th><th>From → To</th><th>Offer Asset</th><th>For Asset</th>
+        <th>Message</th><th>Date</th><th>Status</th><th>Action</th>
+      </tr></thead>
+      <tbody>
+        ${allTrades.map(t => tradeRow(t)).join('')}
+      </tbody>
+    </table>`;
+
+  wrap.querySelectorAll('[data-cancel-trade]').forEach(btn => {
+    btn.addEventListener('click', () => handleCancelTrade(btn.dataset.cancelTrade));
+  });
+}
+
+function tradeRow(t) {
+  const badge = `<span class="badge b-${t.status}">${t.status}</span>`;
+  const cancelBtn = (user.role === 'admin' && t.status === 'pending')
+    ? `<textarea class="resp-input" rows="1" placeholder="Reason…" id="treason-${t.id}"></textarea>
+       <button class="btn btn-cancel" data-cancel-trade="${t.id}">✖ Cancel</button>`
+    : '—';
+
+  return `<tr>
+    <td style="font-size:.78rem;color:var(--gray);">#${t.id}</td>
+    <td>
+      <strong>${esc(t.from_username)}</strong>
+      <div class="sub-cell">(${esc(t.from_full_name||'')})</div>
+      <div style="font-size:.78rem;color:var(--gray);margin:.15rem 0;">→</div>
+      <strong>${esc(t.to_username)}</strong>
+      <div class="sub-cell">(${esc(t.to_full_name||'')})</div>
+    </td>
+    <td>
+      <span class="asset-id">${esc(t.offer_asset_id)}</span>
+      <div class="sub-cell">${esc(t.offer_asset_name)}</div>
+      <div class="sub-cell">${esc(t.offer_category||'')}</div>
+    </td>
+    <td>
+      <span class="asset-id">${esc(t.request_asset_id)}</span>
+      <div class="sub-cell">${esc(t.request_asset_name)}</div>
+      <div class="sub-cell">${esc(t.request_category||'')}</div>
+    </td>
+    <td style="max-width:140px;font-size:.8rem;">${t.message ? esc(t.message) : '—'}</td>
+    <td style="font-size:.78rem;color:var(--gray);">${new Date(t.created_at).toLocaleString()}</td>
+    <td>${badge}</td>
+    <td style="min-width:160px;">${cancelBtn}</td>
+  </tr>`;
+}
+
+async function handleCancelTrade(id) {
+  const reasonEl = document.getElementById(`treason-${id}`);
+  const reason   = reasonEl ? reasonEl.value.trim() || null : null;
+  if (!confirm(`Cancel trade #${id}?`)) return;
+  try {
+    const res = await fetch(`${API}/api/orders/trades/${id}/cancel`, {
+      method: 'PATCH', headers: hdrs(), body: JSON.stringify({ reason })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { toast(data.error || 'Failed', 'err'); return; }
+    toast(data.message || 'Trade cancelled', 'ok');
+    await loadTrades(); loadStats();
+  } catch { toast('Network error', 'err'); }
+}
+
+// ── Boot ──────────────────────────────────────────────────
+loadStats();
+loadOrders();
+loadTrades();
+setInterval(() => { loadStats(); }, 20000);
+</script>
+</body>
+</html>

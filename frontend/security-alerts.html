@@ -1,241 +1,537 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Alerts - Inventory Security Engine</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security Alerts — Inventory Security Engine</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f9fafb;
-            margin: 0;
-            padding: 0;
-            color: #1f2937;
-        }
+    :root {
+      --red:    #dc2626;
+      --orange: #ea580c;
+      --yellow: #d97706;
+      --green:  #16a34a;
+      --blue:   #2563eb;
+      --gray:   #6b7280;
+    }
 
-        /* Top Navigation Bar */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #ffffff;
-            padding: 0 2rem;
-            height: 64px;
-            border-bottom: 1px solid #e5e7eb;
-        }
+    * { box-sizing: border-box; }
 
-        .navbar-brand {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #111827;
-        }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      color: #1f2937;
+    }
 
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            height: 100%;
-        }
+    /* ── Navbar ───────────────────────────────────── */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 0 2rem;
+      height: 64px;
+      border-bottom: 1px solid #e5e7eb;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .navbar-brand { font-size: 1.1rem; font-weight: 700; color: #111827; }
+    .nav-links    { display: flex; gap: 2rem; height: 100%; }
+    .nav-item {
+      text-decoration: none;
+      color: #4b5563;
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      border-bottom: 2px solid transparent;
+      transition: all .2s;
+    }
+    .nav-item.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .nav-item:hover  { color: #111827; }
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #d1d5db;
+      padding: .4rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--red);
+      transition: .2s;
+    }
+    .logout-btn:hover { background: #fef2f2; border-color: var(--red); }
 
-        .nav-item {
-            text-decoration: none;
-            color: #4b5563;
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
+    /* ── Page Layout ──────────────────────────────── */
+    .main-content { padding: 2rem; max-width: 1200px; margin: 0 auto; }
 
-        .nav-item.active {
-            color: #2563eb;
-            border-bottom: 2px solid #2563eb;
-        }
+    /* ── Header bar ───────────────────────────────── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .page-header h1  { font-size: 1.5rem; margin: 0 0 .25rem; }
+    .page-header p   { color: var(--gray); margin: 0; font-size: .875rem; }
 
-        .nav-item:hover {
-            color: #111827;
-        }
+    /* ── Stats row ────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 1rem 1.25rem;
+    }
+    .stat-label { font-size: .75rem; color: var(--gray); text-transform: uppercase; font-weight: 600; margin-bottom: .25rem; }
+    .stat-value { font-size: 1.75rem; font-weight: 700; }
+    .stat-value.red    { color: var(--red); }
+    .stat-value.orange { color: var(--orange); }
+    .stat-value.yellow { color: var(--yellow); }
+    .stat-value.green  { color: var(--green); }
 
-        .logout-btn {
-            background-color: transparent;
-            border: 1px solid #d1d5db;
-            padding: 0.4rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            color: #dc2626;
-            transition: 0.2s;
-        }
+    /* ── Filter bar ───────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+      align-items: center;
+    }
+    .filter-btn {
+      padding: .4rem 1rem;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      font-size: .8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: .15s;
+      color: #374151;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+    .filter-btn.sqli.active  { background: #7c3aed; border-color: #7c3aed; }
+    .filter-btn.crit.active  { background: var(--red); border-color: var(--red); }
+    .refresh-btn {
+      margin-left: auto;
+      padding: .4rem .9rem;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      font-size: .8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      color: #374151;
+      transition: .15s;
+    }
+    .refresh-btn:hover { background: #f3f4f6; }
+    .live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .3; }
+    }
 
-        .logout-btn:hover {
-            background-color: #fef2f2;
-            border-color: #dc2626;
-        }
+    /* ── Alert Cards ──────────────────────────────── */
+    .alerts-container { display: grid; gap: .875rem; }
 
-        /* Main Content Area */
-        .main-content {
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+    .alert-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      transition: box-shadow .2s;
+    }
+    .alert-card:hover          { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+    .alert-card.sqli-card      { border-left: 4px solid #7c3aed; }
+    .alert-card.sqli-card.new  { animation: flashIn .6s ease; }
+    @keyframes flashIn {
+      0%   { background: #f3e8ff; }
+      100% { background: #fff; }
+    }
 
-        .page-header {
-            margin-bottom: 2rem;
-        }
+    .alert-info { flex: 1; min-width: 0; }
 
-        .page-header h1 {
-            font-size: 1.5rem;
-            margin: 0 0 0.5rem 0;
-        }
+    .alert-title-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .4rem; }
+    .alert-title     { font-size: .95rem; font-weight: 600; }
 
-        .page-header p {
-            color: #6b7280;
-            margin: 0;
-        }
+    /* SQL Injection badge */
+    .badge-sqli {
+      background: #7c3aed;
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .badge-new {
+      background: #ef4444;
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: .15rem .5rem;
+      border-radius: 4px;
+      letter-spacing: .05em;
+      animation: blink 1s step-end 4;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
 
-        /* Alert Cards */
-        .alerts-container {
-            display: grid;
-            gap: 1rem;
-        }
+    .alert-details {
+      color: var(--gray);
+      font-size: .82rem;
+      line-height: 1.5;
+      margin-bottom: .4rem;
+      word-break: break-word;
+    }
+    .alert-time { color: #9ca3af; font-size: .75rem; }
 
-        .alert-card {
-            background-color: #ffffff;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            padding: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    /* Severity pills */
+    .right-col { display: flex; flex-direction: column; align-items: flex-end; gap: .5rem; min-width: fit-content; }
+    .alert-severity {
+      padding: .2rem .75rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .severity-critical { background: #fee2e2; color: var(--red); }
+    .severity-high     { background: #ffedd5; color: var(--orange); }
+    .severity-medium   { background: #fef9c3; color: var(--yellow); }
+    .severity-low      { background: #dcfce7; color: var(--green); }
 
-        .alert-info {
-            flex: 1;
-        }
+    .resolved-badge {
+      background: #e5e7eb;
+      color: #374151;
+      border-radius: 999px;
+      padding: .2rem .75rem;
+      font-size: .72rem;
+      font-weight: 600;
+    }
 
-        .alert-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
+    /* Action buttons */
+    .alert-actions   { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+    .action-btn      { padding: .4rem .9rem; border-radius: 6px; font-size: .78rem; font-weight: 500; cursor: pointer; border: none; transition: .15s; }
+    .resolve-btn     { background: #10b981; color: #fff; }
+    .resolve-btn:hover { background: #059669; }
+    .dismiss-btn     { background: var(--gray); color: #fff; }
+    .dismiss-btn:hover { background: #4b5563; }
 
-        .alert-details {
-            color: #6b7280;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--gray);
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: .5rem; }
 
-        .alert-time {
-            color: #9ca3af;
-            font-size: 0.8rem;
-        }
-
-        .alert-severity {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .resolved-badge {
-            display: inline-block;
-            margin-top: 0.35rem;
-            background-color: #e2e8f0;
-            color: #1f2937;
-            border-radius: 9999px;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .severity-critical {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-
-        .severity-high {
-            background-color: #fed7d7;
-            color: #c53030;
-        }
-
-        .severity-medium {
-            background-color: #fef3c7;
-            color: #d69e2e;
-        }
-
-        .severity-low {
-            background-color: #c6f6d5;
-            color: #276749;
-        }
-
-        .alert-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .action-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            border: none;
-            transition: 0.2s;
-        }
-
-        .resolve-btn {
-            background-color: #10b981;
-            color: white;
-        }
-
-        .resolve-btn:hover {
-            background-color: #059669;
-        }
-
-        .dismiss-btn {
-            background-color: #6b7280;
-            color: white;
-        }
-
-        .dismiss-btn:hover {
-            background-color: #4b5563;
-        }
-    </style>
+    /* Toast notification */
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #1f2937;
+      color: #fff;
+      padding: .75rem 1.25rem;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .3s;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.sqli { background: #7c3aed; }
+  </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="navbar-brand">Inventory Security Engine</div>
-        
-        <div class="nav-links">
-            <a href="dashboard.html" class="nav-item">Dashboard</a>
-            <a href="inventory-logs.html" class="nav-item">Inventory Logs</a>
-            <a href="security-alerts.html" class="nav-item active">Security Alerts</a>
-            <a href="access-control.html" class="nav-item">Access Control</a>
-            <a href="reports.html" class="nav-item">Reports</a>
-        </div>
+  <!-- ── Navbar ─────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="navbar-brand">🔐 Inventory Security Engine</div>
+    <div class="nav-links">
+      <a href="dashboard.html"       class="nav-item">Dashboard</a>
+      <a href="inventory-logs.html"  class="nav-item">Inventory Logs</a>
+      <a href="security-alerts.html" class="nav-item active">Security Alerts</a>
+      <a href="access-control.html"  class="nav-item" id="accessControlLink">Access Control</a>
+      <a href="reports.html"         class="nav-item">Reports</a>
+    </div>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </nav>
 
-        <button id="logoutBtn" class="logout-btn">Logout</button>
-    </nav>
+  <!-- ── Main Content ───────────────────────────── -->
+  <main class="main-content">
 
-    <main class="main-content">
-        
-        <div class="page-header">
-            <h1>Security Alerts</h1>
-            <p>Active security alerts and system notifications requiring attention.</p>
-        </div>
+    <div class="page-header">
+      <div>
+        <h1>🚨 Security Alerts</h1>
+        <p>Real-time threat feed. SQL injection attempts are automatically detected and logged.</p>
+      </div>
+    </div>
 
-        <div class="alerts-container">
-            <!-- Alerts will be loaded dynamically -->
-        </div>
+    <!-- Stats row -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="stat-label">Total Alerts</div><div class="stat-value" id="statTotal">—</div></div>
+      <div class="stat-card"><div class="stat-label">SQL Injection</div><div class="stat-value red" id="statSQLi">—</div></div>
+      <div class="stat-card"><div class="stat-label">Critical</div><div class="stat-value red" id="statCrit">—</div></div>
+      <div class="stat-card"><div class="stat-label">Unresolved</div><div class="stat-value orange" id="statUnresolved">—</div></div>
+      <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-value green" id="statResolved">—</div></div>
+    </div>
 
-    </main>
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <button class="filter-btn active"      data-filter="all">All</button>
+      <button class="filter-btn sqli"        data-filter="sqli">🟣 SQL Injection</button>
+      <button class="filter-btn crit"        data-filter="critical">🔴 Critical</button>
+      <button class="filter-btn"             data-filter="unresolved">Unresolved</button>
+      <button class="filter-btn"             data-filter="resolved">Resolved</button>
+      <button class="refresh-btn" id="refreshBtn">
+        <span class="live-dot"></span> Live &nbsp;|&nbsp; Refresh
+      </button>
+    </div>
 
-    <script src="js/security-alerts.js"></script>
+    <!-- Alerts list -->
+    <div class="alerts-container" id="alertsContainer">
+      <div class="empty-state"><div class="icon">⏳</div>Loading alerts…</div>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script>
+  // ─────────────────────────────────────────────────────────
+  //  SECURITY ALERTS PAGE — ISE
+  //  Handles: display, SQL injection badge, filter, poll
+  // ─────────────────────────────────────────────────────────
+  const API = 'http://localhost:5000';
+  let allAlerts     = [];
+  let currentFilter = 'all';
+  let lastCount     = -1;          // for new-alert detection
+  let isAdmin       = false;
+
+  // ── Auth guard ───────────────────────────────
+  const token = localStorage.getItem('token');
+  const user  = JSON.parse(localStorage.getItem('user') || '{}');
+  isAdmin     = user.role === 'admin';
+
+  if (!token) { window.location.href = 'login.html'; }
+
+  // Hide access-control link for non-admins
+  if (user.role !== 'admin') {
+    const link = document.getElementById('accessControlLink');
+    if (link) link.style.display = 'none';
+  }
+
+  // ── Logout ──────────────────────────────────
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  });
+
+  // ── Filter buttons ───────────────────────────
+  document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderAlerts();
+    });
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', loadAlerts);
+
+  // ── Helpers ──────────────────────────────────
+  function isSQLi(alert) {
+    return alert.title && alert.title.toLowerCase().includes('sql injection');
+  }
+
+  function dedupeAlerts(arr) {
+    const seen = new Set();
+    return (arr || []).filter(a => {
+      const key = [a.title, a.time, a.asset_id || '', a.severity].join('||');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function applyFilter(arr) {
+    switch (currentFilter) {
+      case 'sqli':      return arr.filter(a => isSQLi(a));
+      case 'critical':  return arr.filter(a => a.severity === 'critical');
+      case 'unresolved':return arr.filter(a => !a.resolved);
+      case 'resolved':  return arr.filter(a =>  a.resolved);
+      default:          return arr;
+    }
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = 'show' + (type ? ` ${type}` : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = ''; }, 3500);
+  }
+
+  // ── Update stat cards ────────────────────────
+  function updateStats(alerts) {
+    document.getElementById('statTotal').textContent     = alerts.length;
+    document.getElementById('statSQLi').textContent      = alerts.filter(isSQLi).length;
+    document.getElementById('statCrit').textContent      = alerts.filter(a => a.severity === 'critical').length;
+    document.getElementById('statUnresolved').textContent= alerts.filter(a => !a.resolved).length;
+    document.getElementById('statResolved').textContent  = alerts.filter(a =>  a.resolved).length;
+  }
+
+  // ── Render alerts ────────────────────────────
+  function renderAlerts() {
+    const container = document.getElementById('alertsContainer');
+    const filtered  = applyFilter(allAlerts);
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">✅</div>No alerts for this filter.</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map((alert, idx) => {
+      const time          = alert.time ? new Date(alert.time).toLocaleString() : 'Unknown';
+      const severityClass = `severity-${alert.severity}`;
+      const sqli          = isSQLi(alert);
+      const isNew         = idx === 0 && lastCount > -1 && allAlerts.length > lastCount;
+
+      const sqliTag  = sqli  ? `<span class="badge-sqli">⚠ SQL Injection</span>` : '';
+      const newTag   = isNew ? `<span class="badge-new">NEW</span>` : '';
+      const resolved = alert.resolved ? `<span class="resolved-badge">✔ Resolved</span>` : '';
+
+      const actions = isAdmin && !alert.resolved
+        ? `<div class="alert-actions">
+             <button class="action-btn resolve-btn" data-action="resolve" data-id="${alert.id}">✔ Resolve</button>
+             <button class="action-btn dismiss-btn" data-action="dismiss" data-id="${alert.id}">✖ Dismiss</button>
+           </div>`
+        : '';
+
+      return `
+        <div class="alert-card ${sqli ? 'sqli-card' : ''} ${isNew ? 'new' : ''}">
+          <div class="alert-info">
+            <div class="alert-title-row">
+              <span class="alert-title">${escHtml(alert.title)}</span>
+              ${sqliTag}${newTag}
+            </div>
+            <div class="alert-details">${escHtml(alert.details || '')}</div>
+            <div class="alert-time">🕒 ${time}${alert.asset_id ? ` · Asset: ${escHtml(alert.asset_id)}` : ''}</div>
+          </div>
+          <div class="right-col">
+            <div class="alert-severity ${severityClass}">${alert.severity.toUpperCase()}</div>
+            ${resolved}
+            ${actions}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Load from API ────────────────────────────
+  async function loadAlerts() {
+    const container = document.getElementById('alertsContainer');
+    try {
+      const res = await fetch(`${API}/api/dashboard/security-alerts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.status === 401) { localStorage.clear(); window.location.href='login.html'; return; }
+      if (res.status === 403) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">🚫</div>Access denied.</div>`;
+        return;
+      }
+      if (!res.ok) throw new Error('Server error');
+
+      const raw    = await res.json();
+      const alerts = dedupeAlerts(raw);
+
+      // Detect new SQL injection since last poll
+      if (lastCount !== -1 && alerts.length > lastCount) {
+        const newSQLi = alerts.slice(0, alerts.length - lastCount).filter(isSQLi);
+        if (newSQLi.length > 0) {
+          showToast(`🚨 ${newSQLi.length} new SQL Injection attempt(s) detected!`, 'sqli');
+        }
+      }
+
+      lastCount = alerts.length;
+      allAlerts = alerts;
+
+      updateStats(alerts);
+      renderAlerts();
+
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = `<div class="empty-state"><div class="icon">❌</div>Error loading alerts. Check your connection.</div>`;
+    }
+  }
+
+  // ── Resolve / Dismiss ────────────────────────
+  document.getElementById('alertsContainer').addEventListener('click', async e => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    if (!isAdmin) { alert('Only admins can update alert status.'); return; }
+
+    const id     = btn.dataset.id;
+    const action = btn.dataset.action;
+
+    if (action === 'resolve' && !confirm('Mark this alert as resolved?')) return;
+    if (action === 'dismiss' && !confirm('Dismiss this alert?')) return;
+
+    try {
+      const res = await fetch(`${API}/api/dashboard/security-alerts/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ resolved: action === 'resolve' })
+      });
+      if (res.ok) { showToast('Alert updated.'); loadAlerts(); }
+      else        { const d = await res.json().catch(()=>({})); alert(d.error || 'Failed'); }
+    } catch (err) { alert('Network error'); }
+  });
+
+  // ── Initial load + live poll every 15s ───────
+  loadAlerts();
+  setInterval(loadAlerts, 15000);
+  </script>
 </body>
 </html>

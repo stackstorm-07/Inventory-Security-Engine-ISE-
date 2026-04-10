@@ -1,304 +1,425 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Inventory Security Engine</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — Inventory Security Engine</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    :root {
+      --blue:   #2563eb;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --gray:   #6b7280;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f3f4f6; margin: 0; color: #1f2937; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f9fafb;
-            margin: 0;
-            padding: 0;
-            color: #1f2937;
-        }
+    /* ── Navbar ──────────────────────────── */
+    .navbar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fff; padding: 0 2rem; height: 64px;
+      border-bottom: 1px solid #e5e7eb;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .navbar-brand { font-size: 1.1rem; font-weight: 700; color: #111827; }
+    .nav-links    { display: flex; gap: 2rem; height: 100%; }
+    .nav-item {
+      text-decoration: none; color: #4b5563; font-size: .875rem; font-weight: 500;
+      display: flex; align-items: center; gap: .3rem;
+      border-bottom: 2px solid transparent; transition: .2s;
+    }
+    .nav-item.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .nav-item:hover  { color: #111827; }
+    .nav-badge {
+      background: var(--red); color: #fff;
+      font-size: .62rem; font-weight: 700;
+      padding: .1rem .4rem; border-radius: 999px;
+      display: none; animation: blink 1.4s infinite;
+    }
+    @keyframes blink { 50% { opacity: .4; } }
+    .logout-btn {
+      background: transparent; border: 1px solid #d1d5db;
+      padding: .4rem 1rem; border-radius: 6px; cursor: pointer;
+      font-weight: 500; color: var(--red); transition: .2s;
+    }
+    .logout-btn:hover { background: #fef2f2; border-color: var(--red); }
 
-        /* Top Navigation Bar */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #ffffff;
-            padding: 0 2rem;
-            height: 64px;
-            border-bottom: 1px solid #e5e7eb;
-        }
+    /* ── Banner ──────────────────────────── */
+    #sqliBanner {
+      display: none; background: #7c3aed; color: #fff;
+      padding: .7rem 2rem; font-size: .875rem; font-weight: 500;
+      align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    #sqliBanner a { color: #e9d5ff; text-decoration: underline; font-weight: 600; }
+    #orderBanner {
+      display: none; background: #ea580c; color: #fff;
+      padding: .7rem 2rem; font-size: .875rem; font-weight: 500;
+      align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    #orderBanner a { color: #fed7aa; text-decoration: underline; font-weight: 600; }
+    .close-banner { cursor: pointer; font-size: 1.1rem; opacity: .8; }
 
-        .navbar-brand {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #111827;
-        }
+    /* ── Main ────────────────────────────── */
+    .main-content { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+    .page-header  { margin-bottom: 1.75rem; }
+    .page-header h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+    .page-header p  { color: var(--gray); margin: 0; font-size: .875rem; }
 
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            height: 100%;
-        }
+    /* ── Stats grid ──────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 1.25rem; margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #fff; padding: 1.4rem; border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      border: 1px solid #e5e7eb; border-left: 4px solid;
+      cursor: default; transition: box-shadow .2s;
+    }
+    .stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+    .stat-card a { text-decoration: none; color: inherit; display: block; }
+    .card-blue   { border-left-color: #3b82f6; }
+    .card-yellow { border-left-color: #f59e0b; }
+    .card-green  { border-left-color: #10b981; }
+    .card-purple { border-left-color: #8b5cf6; }
+    .card-red    { border-left-color: #dc2626; }
+    .card-orange { border-left-color: #ea580c; }
+    .stat-title {
+      font-size: .72rem; text-transform: uppercase; color: var(--gray);
+      font-weight: 600; letter-spacing: .05em; margin-bottom: .5rem;
+    }
+    .stat-value       { font-size: 1.8rem; font-weight: 700; color: #111827; }
+    .stat-value.red   { color: var(--red); }
+    .stat-value.orange{ color: var(--orange); }
+    .stat-value.green { color: var(--green); }
+    .stat-sub { font-size: .75rem; color: var(--gray); margin-top: .25rem; }
 
-        .nav-item {
-            text-decoration: none;
-            color: #4b5563;
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
+    /* ── Section header ──────────────────── */
+    .sec-hd {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1rem;
+    }
+    .sec-hd h3 { font-size: 1.05rem; margin: 0; }
+    .sec-hd a  { font-size: .82rem; color: var(--blue); font-weight: 600; text-decoration: none; }
 
-        /* The active tab gets a blue underline, just like your image! */
-        .nav-item.active {
-            color: #2563eb;
-            border-bottom: 2px solid #2563eb;
-        }
+    /* ── Tables ──────────────────────────── */
+    .table-container {
+      background: #fff; border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      font-size: .75rem; color: var(--gray); font-weight: 600;
+      padding-bottom: .9rem; border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+    td {
+      padding: .85rem 0; font-size: .875rem;
+      border-bottom: 1px solid #f3f4f6; color: #374151;
+    }
+    tr:last-child td { border-bottom: none; }
+    .badge-status {
+      display: inline-block; padding: .2rem .55rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 600;
+    }
+    .b-pending   { background: #fef3c7; color: #92400e; }
+    .b-approved  { background: #dbeafe; color: #1e40af; }
+    .b-fulfilled { background: #dcfce7; color: var(--green); }
+    .b-sqli      { background: #f3e8ff; color: var(--purple); }
+    .b-alert     { background: #fee2e2; color: var(--red); }
 
-        .nav-item:hover {
-            color: #111827;
-        }
-
-        .logout-btn {
-            background-color: transparent;
-            border: 1px solid #d1d5db;
-            padding: 0.4rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            color: #dc2626;
-            transition: 0.2s;
-        }
-
-        .logout-btn:hover {
-            background-color: #fef2f2;
-            border-color: #dc2626;
-        }
-
-        /* Main Content Area */
-        .main-content {
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-header h1 {
-            font-size: 1.5rem;
-            margin: 0 0 0.5rem 0;
-        }
-
-        .page-header p {
-            color: #6b7280;
-            margin: 0;
-        }
-
-        /* Stat Cards (Recreating the 4 boxes from your image) */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background-color: #ffffff;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
-            border-left: 4px solid;
-        }
-
-        /* Colors for the left border of the cards */
-        .card-blue { border-left-color: #3b82f6; }
-        .card-yellow { border-left-color: #f59e0b; }
-        .card-green { border-left-color: #10b981; }
-        .card-purple { border-left-color: #8b5cf6; }
-
-        .stat-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #6b7280;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 1.875rem;
-            font-weight: 700;
-            color: #111827;
-        }
-
-        /* Log Book Table */
-        .table-container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            padding: 1.5rem;
-        }
-
-        .table-container h3 {
-            margin: 0 0 1.5rem 0;
-            font-size: 1.1rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th {
-            font-size: 0.8rem;
-            color: #6b7280;
-            font-weight: 600;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        td {
-            padding: 1rem 0;
-            font-size: 0.9rem;
-            border-bottom: 1px solid #f3f4f6;
-            color: #374151;
-        }
-
-        .status-badge {
-            background-color: #fee2e2;
-            color: #dc2626;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-    </style>
+    /* asset table */
+    .asset-id-cell { font-family: monospace; font-size: .8rem; }
+  </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="navbar-brand">Inventory Security Engine</div>
-        
-        <div class="nav-links">
-            <a href="dashboard.html" class="nav-item active">Dashboard</a>
-            <a href="inventory-logs.html" class="nav-item">Inventory Logs</a>
-            <a href="security-alerts.html" class="nav-item">Security Alerts</a>
-            <a href="access-control.html" class="nav-item">Access Control</a>
-            <a href="reports.html" class="nav-item">Reports</a>
-        </div>
+<!-- Banners -->
+<div id="sqliBanner">
+  <span>🚨 <strong id="sqliCount">?</strong> unresolved SQL Injection attempt(s) detected!</span>
+  <a href="security-alerts.html">View Alerts →</a>
+  <span class="close-banner" onclick="document.getElementById('sqliBanner').style.display='none'">✕</span>
+</div>
+<div id="orderBanner">
+  <span>📦 <strong id="orderCount">?</strong> pending viewer order(s) awaiting review!</span>
+  <a href="admin-orders.html">Review Orders →</a>
+  <span class="close-banner" onclick="document.getElementById('orderBanner').style.display='none'">✕</span>
+</div>
 
-        <button id="logoutBtn" class="logout-btn">Logout</button>
-    </nav>
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">🔐 Inventory Security Engine</div>
+  <div class="nav-links">
+    <a href="dashboard.html"       class="nav-item active">Dashboard</a>
+    <a href="inventory-logs.html"  class="nav-item">Inventory Logs</a>
+    <a href="security-alerts.html" class="nav-item">
+      Security Alerts <span class="nav-badge" id="alertBadge">0</span>
+    </a>
+    <a href="access-control.html"  class="nav-item" id="accessControlLink">Access Control</a>
+    <a href="admin-orders.html"    class="nav-item" id="ordersLink">
+      Orders &amp; Trades <span class="nav-badge" id="orderBadge">0</span>
+    </a>
+    <a href="reports.html"         class="nav-item">Reports</a>
+  </div>
+  <button id="logoutBtn" class="logout-btn">Logout</button>
+</nav>
 
-    <main class="main-content">
-        
-        <div class="page-header">
-            <h1 id="welcomeMessage">Security Dashboard</h1>
-        </div>
+<main class="main-content">
+  <div class="page-header">
+    <h1 id="welcomeMessage">Security Dashboard</h1>
+    <p id="roleLabel"></p>
+  </div>
 
-        <div class="stats-grid">
-            <div class="stat-card card-blue">
-                <div class="stat-title">Total Items Tracked</div>
-                <div class="stat-value">1,204</div>
-            </div>
-            <div class="stat-card card-yellow">
-                <div class="stat-title">Active Security Alerts</div>
-                <div class="stat-value">4</div>
-            </div>
-            <div class="stat-card card-green">
-                <div class="stat-title">Resolved Today</div>
-                <div class="stat-value">12</div>
-            </div>
-            <div class="stat-card card-purple">
-                <div class="stat-title">System Uptime (HRS)</div>
-                <div class="stat-value">99.9</div>
-            </div>
-        </div>
-
-        <div class="table-container">
-            <h3>Recent Security Log Book</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>DATE</th>
-                        <th>SUBJECT</th>
-                        <th>ITEM / MACHINE</th>
-                        <th>USER</th>
-                        <th>ACTION TYPE</th>
-                        <th>STATUS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>2026-03-24</td>
-                        <td>Unauthorized Access Attempt</td>
-                        <td>Server Rack A</td>
-                        <td>Unknown</td>
-                        <td>Lockdown</td>
-                        <td><span class="status-badge">High Alert</span></td>
-                    </tr>
-                    <tr>
-                        <td>2026-03-23</td>
-                        <td>Item Checked Out</td>
-                        <td>Samsung Monitor 15"</td>
-                        <td>Ankit</td>
-                        <td>Standard Issue</td>
-                        <td><span style="color: #10b981; font-size: 0.8rem; font-weight: 500;">Cleared</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-<div class="table-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h3 style="margin:0;">🛡️ Inventory Security Engine</h3>
-        <button id="openModalBtn" class="logout-btn" style="color: #2563eb; border-color: #2563eb;">+ Add Equipment</button>
+  <!-- Stats row -->
+  <div class="stats-grid">
+    <div class="stat-card card-blue">
+      <div class="stat-title">Total Assets</div>
+      <div class="stat-value" id="statAssets">—</div>
+      <div class="stat-sub">Tracked in inventory</div>
     </div>
-
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <input type="text" id="inventorySearch" placeholder="Scan asset database..." 
-               style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px;">
-        <button id="searchBtn" class="logout-btn" style="color: white; background: #111827;">Scan</button>
+    <div class="stat-card card-orange">
+      <a href="admin-orders.html">
+        <div class="stat-title">Pending Orders</div>
+        <div class="stat-value orange" id="statPending">—</div>
+        <div class="stat-sub">Awaiting review</div>
+      </a>
     </div>
+    <div class="stat-card card-green">
+      <div class="stat-title">Fulfilled Today</div>
+      <div class="stat-value green" id="statFulfilled">—</div>
+      <div class="stat-sub">Orders completed</div>
+    </div>
+    <div class="stat-card card-purple">
+      <div class="stat-title">Active Trades</div>
+      <div class="stat-value" id="statTrades" style="color:var(--purple);">—</div>
+      <div class="stat-sub">Viewer-to-viewer</div>
+    </div>
+    <div class="stat-card card-red">
+      <a href="security-alerts.html">
+        <div class="stat-title">SQL Injection</div>
+        <div class="stat-value red" id="statSQLi">—</div>
+        <div class="stat-sub">Total attempts</div>
+      </a>
+    </div>
+    <div class="stat-card card-yellow">
+      <a href="security-alerts.html">
+        <div class="stat-title">Unresolved Alerts</div>
+        <div class="stat-value orange" id="statAlerts">—</div>
+        <div class="stat-sub">Needs attention</div>
+      </a>
+    </div>
+  </div>
 
+  <!-- Pending orders table (admin/staff) -->
+  <div class="table-container" id="pendingOrdersSection" style="display:none;">
+    <div class="sec-hd">
+      <h3>📋 Pending Viewer Orders</h3>
+      <a href="admin-orders.html">Manage all →</a>
+    </div>
     <table>
-        <thead>
-            <tr>
-                <th>ASSET ID</th>
-                <th>EQUIPMENT NAME</th>
-                <th>ASSIGNED USER</th>
-                <th>STATUS</th>
-                <th>ACTION</th>
-            </tr>
-        </thead>
-        <tbody id="inventoryTableBody">
-            </tbody>
+      <thead><tr>
+        <th>ORDER #</th><th>VIEWER</th><th>ASSET</th><th>REQUESTED</th><th>STATUS</th>
+      </tr></thead>
+      <tbody id="pendingOrdersBody"></tbody>
     </table>
-</div>
+  </div>
 
-<div id="assetModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
-    <div style="background: white; padding: 2rem; border-radius: 8px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-        <h2 style="margin-top:0;">Deploy New Asset</h2>
-        <form id="addAssetForm">
-            <input type="text" id="assetName" placeholder="Item Name" required style="width:95%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:4px;">
-            <input type="text" id="assetUser" placeholder="User" required style="width:95%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:4px;">
-            <select id="assetStatus" style="width:100%; padding:10px; margin-bottom:20px; border:1px solid #ddd; border-radius:4px;">
-                <option value="Operational">Operational</option>
-                <option value="Maintenance">Maintenance</option>
-            </select>
-            <div style="display:flex; justify-content: flex-end; gap:10px;">
-                <button type="button" id="closeModalBtn" style="border:none; background:none; cursor:pointer;">Cancel</button>
-                <button type="submit" class="logout-btn" style="background:#2563eb; color:white; border:none;">Deploy</button>
-            </div>
-        </form>
+  <!-- SQL injection mini table (admin/staff) -->
+  <div class="table-container" id="sqliSection" style="display:none;">
+    <div class="sec-hd">
+      <h3>🟣 Recent SQL Injection Attempts</h3>
+      <a href="security-alerts.html">View all →</a>
     </div>
-</div>
-    </main>
+    <table>
+      <thead><tr>
+        <th>TIME</th><th>DETAILS</th><th>SEVERITY</th><th>STATUS</th>
+      </tr></thead>
+      <tbody id="sqliBody"></tbody>
+    </table>
+  </div>
 
-    <script src="js/dashboard.js"></script>
+  <!-- Inventory asset table -->
+  <div class="table-container">
+    <div class="sec-hd">
+      <h3>🛡️ Asset Inventory</h3>
+      <button id="openModalBtn" class="logout-btn" style="color:var(--blue);border-color:var(--blue);">+ Add Asset</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:1.25rem;">
+      <input type="text" id="inventorySearch" placeholder="Scan asset database…"
+             style="flex:1;padding:10px;border:1px solid #e5e7eb;border-radius:6px;font-size:.875rem;">
+      <button id="searchBtn" class="logout-btn" style="color:#fff;background:#111827;">Scan</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>ASSET ID</th><th>EQUIPMENT NAME</th><th>CATEGORY</th>
+        <th>ASSIGNED TO</th><th>STATUS</th><th>ACTION</th>
+      </tr></thead>
+      <tbody id="inventoryTableBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Add Asset Modal -->
+<div id="assetModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;justify-content:center;align-items:center;">
+  <div style="background:#fff;padding:2rem;border-radius:10px;width:420px;box-shadow:0 10px 25px rgba(0,0,0,.2);">
+    <h2 style="margin-top:0;">Deploy New Asset</h2>
+    <form id="addAssetForm">
+      <input type="text" id="assetName" placeholder="Asset Name" required style="width:95%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:4px;">
+      <input type="text" id="assetUser" placeholder="Assigned To (username)" style="width:95%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:4px;">
+      <select id="assetStatus" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:4px;">
+        <option value="available">Available</option>
+        <option value="checked_out">Checked Out</option>
+        <option value="maintenance">Maintenance</option>
+      </select>
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <button type="button" id="closeModalBtn" style="border:none;background:none;cursor:pointer;font-size:.9rem;">Cancel</button>
+        <button type="submit" class="logout-btn" style="background:var(--blue);color:#fff;border:none;">Deploy</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/dashboard.js"></script>
+<script>
+// ──────────────────────────────────────────────────────────
+//  DASHBOARD LIVE STATS POLLER
+//  Polls security-alerts + orders/stats every 20s
+// ──────────────────────────────────────────────────────────
+(async function dashboardPoller() {
+  const token   = localStorage.getItem('token');
+  const user    = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdminOrStaff = ['admin','staff'].includes(user.role);
+
+  if (!token) return;
+
+  // Set welcome
+  if (user.username) {
+    document.getElementById('welcomeMessage').textContent = `Welcome, ${user.username} 👋`;
+    document.getElementById('roleLabel').textContent      = `Role: ${user.role || 'viewer'}`;
+  }
+
+  // Hide links for non-admins
+  if (user.role !== 'admin') {
+    const ac = document.getElementById('accessControlLink');
+    if (ac) ac.style.display = 'none';
+  }
+  if (!isAdminOrStaff) {
+    const ol = document.getElementById('ordersLink');
+    if (ol) ol.style.display = 'none';
+  }
+
+  const hdrs = () => ({ 'Authorization': `Bearer ${token}` });
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function pollAlerts() {
+    try {
+      const res = await fetch('http://localhost:5000/api/dashboard/security-alerts', { headers: hdrs() });
+      if (!res.ok) return;
+      const alerts = await res.json();
+
+      const sqli       = alerts.filter(a => a.title && a.title.toLowerCase().includes('sql injection'));
+      const unresolved = alerts.filter(a => !a.resolved);
+      const unresSQLi  = sqli.filter(a => !a.resolved);
+
+      document.getElementById('statSQLi').textContent   = sqli.length;
+      document.getElementById('statAlerts').textContent = unresolved.length;
+
+      // Alert badge
+      const ab = document.getElementById('alertBadge');
+      ab.textContent    = unresolved.length;
+      ab.style.display  = unresolved.length > 0 ? 'inline-block' : 'none';
+
+      // SQLi banner
+      const sb = document.getElementById('sqliBanner');
+      if (unresSQLi.length > 0) {
+        document.getElementById('sqliCount').textContent = unresSQLi.length;
+        sb.style.display = 'flex';
+      }
+
+      // SQLi mini table
+      if (isAdminOrStaff && sqli.length > 0) {
+        document.getElementById('sqliSection').style.display = 'block';
+        document.getElementById('sqliBody').innerHTML = sqli.slice(0,5).map(a => {
+          const det = (a.details||'').slice(0,100) + ((a.details||'').length > 100 ? '…' : '');
+          const st  = a.resolved
+            ? '<span style="color:var(--green);font-size:.78rem;font-weight:600;">Resolved</span>'
+            : '<span style="color:var(--red);font-size:.78rem;font-weight:600;">⚠ Open</span>';
+          return `<tr>
+            <td style="font-size:.78rem;color:var(--gray);">${new Date(a.time).toLocaleString()}</td>
+            <td style="font-size:.8rem;">${esc(det)}</td>
+            <td><span class="badge-status b-sqli">CRITICAL</span></td>
+            <td>${st}</td>
+          </tr>`;
+        }).join('');
+      }
+    } catch {}
+  }
+
+  async function pollOrders() {
+    if (!isAdminOrStaff) return;
+    try {
+      const res = await fetch('http://localhost:5000/api/orders/stats', { headers: hdrs() });
+      if (!res.ok) return;
+      const d = await res.json();
+      const o = d.orders || {};
+      const t = d.trades || {};
+
+      document.getElementById('statPending').textContent   = o.pending || 0;
+      document.getElementById('statFulfilled').textContent = o.fulfilled_today || 0;
+      document.getElementById('statTrades').textContent    = t.active_trades || 0;
+
+      // Orders badge
+      const ob = document.getElementById('orderBadge');
+      const pending = parseInt(o.pending || 0);
+      ob.textContent   = pending;
+      ob.style.display = pending > 0 ? 'inline-block' : 'none';
+
+      // Orders banner
+      const bnr = document.getElementById('orderBanner');
+      if (pending > 0) {
+        document.getElementById('orderCount').textContent = pending;
+        bnr.style.display = 'flex';
+      }
+
+      // Pending orders mini table
+      if ((d.recent_pending||[]).length > 0) {
+        document.getElementById('pendingOrdersSection').style.display = 'block';
+        document.getElementById('pendingOrdersBody').innerHTML = d.recent_pending.map(o => `
+          <tr>
+            <td style="font-size:.78rem;color:var(--gray);">#${o.id}</td>
+            <td>${esc(o.viewer_username)}<div style="font-size:.75rem;color:var(--gray);">${esc(o.viewer_full_name||'')}</div></td>
+            <td><code style="font-size:.78rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:3px;">${esc(o.asset_id)}</code>
+                <div style="font-size:.75rem;color:var(--gray);">${esc(o.asset_name)}</div></td>
+            <td style="font-size:.78rem;color:var(--gray);">${new Date(o.created_at).toLocaleString()}</td>
+            <td><span class="badge-status b-pending">pending</span></td>
+          </tr>`).join('');
+      }
+    } catch {}
+  }
+
+  async function pollAssets() {
+    try {
+      const res = await fetch('http://localhost:5000/api/dashboard/assets', { headers: hdrs() });
+      if (!res.ok) return;
+      const assets = await res.json();
+      document.getElementById('statAssets').textContent = assets.length;
+    } catch {}
+  }
+
+  // Initial load
+  await Promise.all([pollAlerts(), pollOrders(), pollAssets()]);
+  // Live poll every 20s
+  setInterval(() => { pollAlerts(); pollOrders(); pollAssets(); }, 20000);
+})();
+</script>
 </body>
 </html>
