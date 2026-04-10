@@ -29,11 +29,15 @@ body {
   inset: 0;
   background: rgba(0,0,0,.5);
 }
+
+/* Updated Overlay to Center Text */
 .overlay {
   position: absolute;
   bottom: 40px;
-  left: 40px;
-  max-width: 70%;
+  width: 100%;
+  text-align: center;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 .overlay h1 { font-size: 32px; margin-bottom: 10px; }
 .overlay p { font-size: 14px; opacity: .8; }
@@ -63,17 +67,30 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ===== LOGO STYLING ===== */
+.auth-logo {
+  display: block;
+  margin: 0 auto 15px auto;
+  width: 65px; 
+  height: auto;
+}
+
 /* ===== HEADINGS ===== */
 .form-box h2 {
-  margin-bottom: 4px;
+  margin-bottom: 24px;
   font-size: 26px;
   font-weight: 600;
+  text-align: center;
 }
 
 .form-box p {
   margin-bottom: 18px;
   font-size: 14px;
   color: #a1a1aa;
+}
+
+#formSubtitle {
+  text-align: center;
 }
 
 /* ===== FORM ===== */
@@ -133,7 +150,9 @@ input:focus::placeholder {
 /* ===== ICONS ===== */
 #signupFullName,
 #signupUsername,
-#loginIdentifier {
+#loginIdentifier,
+#identifier,
+#resetIdentifier {
   background-image: url("user.svg");
 }
 
@@ -147,7 +166,9 @@ input:focus::placeholder {
 
 #signupPassword,
 #signupConfirmPassword,
-#loginPassword {
+#loginPassword,
+#newPassword,
+#confirmPassword {
   background-image: url("lock.svg");
 }
 
@@ -198,6 +219,7 @@ input[type="checkbox"] {
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
+  flex-wrap: wrap; /* This allows items to wrap to the next line */
 }
 
 #captchaCanvas {
@@ -235,12 +257,24 @@ input[type="checkbox"] {
 #captchaInput {
   padding-left: 12px !important;
   letter-spacing: 4px;
-  text-transform: uppercase;
+  text-transform: none; /* CHANGED TO NONE SO CASES SHOW CORRECTLY */
   font-weight: bold;
   background-image: none !important;
 }
 
+/* FIX CAPTCHA PLACEHOLDER */
+#captchaInput::placeholder {
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: normal;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
 .captcha-error {
+  display: block;      /* Forces it to be its own block */
+  width: 100%;         /* Forces it onto a new line below the input */
+  text-align: left;    /* Aligns it nicely with the input field */
   font-size: 12px;
   color: #f87171;
   margin-top: 2px;
@@ -283,6 +317,25 @@ button:active {
   box-shadow: 0 2px 10px rgba(123, 97, 255, 0.3);
 }
 
+/* ===== FORGOT PASSWORD LINK STYLING ===== */
+.forgot-password-section {
+  text-align: right;
+  margin-top: 4px;
+  margin-bottom: 12px;
+}
+
+.forgot-password-section a {
+  font-size: 13px;
+  color: #a1a1aa; 
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.forgot-password-section a:hover {
+  color: #8a7dff; 
+  text-decoration: underline;
+}
+
 /* ===== LINKS ===== */
 .switch {
   margin-top: 18px;
@@ -301,4 +354,50 @@ button:active {
   text-decoration: underline;
   color: #c4b5fd;
   text-shadow: 0 0 6px rgba(138, 125, 255, 0.6);
+}
+
+/* ===== 2FA CODE INPUT STYLING ===== */
+#twoFactorCode {
+  letter-spacing: 10px;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+  padding: 12px; 
+  background-image: none !important; 
+}
+
+#twoFactorCode::placeholder {
+  letter-spacing: normal;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+/* ===== SECONDARY BUTTON (Back to Login) ===== */
+.secondary-btn {
+  background: transparent;
+  border: 1px solid #3b3659;
+  color: #a1a1aa;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 4px;
+  
+  box-shadow: none;
+  animation: none;
+  background-size: auto;
+  transition: all 0.3s ease;
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: #5b4ae6;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.secondary-btn:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.02);
 }

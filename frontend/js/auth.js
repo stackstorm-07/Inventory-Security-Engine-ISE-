@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================================================================
   // TEXT CAPTCHA  — canvas-drawn, regex-validated, zero dependencies
   // =========================================================================
-  const CAPTCHA_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const CAPTCHA_CHARS = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const CAPTCHA_LENGTH = 5;
   let currentCaptchaText = ""; 
 
@@ -100,19 +100,24 @@ document.addEventListener("DOMContentLoaded", () => {
   function validateCaptchaInput(userInput) {
     const trimmed = userInput.trim();
     const allowedCharsRegex = /^[A-Za-z2-9]+$/;
+    
     if (!allowedCharsRegex.test(trimmed)) {
-      return { ok: false, message: "CAPTCHA: only letters and digits 2–9 allowed." };
+      return { ok: false, message: "Invalid Captcha" };
     }
+    
     const exactLengthRegex = new RegExp(`^[A-Za-z2-9]{${CAPTCHA_LENGTH}}$`);
     if (!exactLengthRegex.test(trimmed)) {
-      return { ok: false, message: `CAPTCHA must be exactly ${CAPTCHA_LENGTH} characters.` };
+      return { ok: false, message: "Invalid Captcha" };
     }
-    if (trimmed.toUpperCase() !== currentCaptchaText) {
-      return { ok: false, message: "Incorrect CAPTCHA. Please try again." };
+    
+    // Strict Case-Sensitive comparison
+    if (trimmed !== currentCaptchaText) {
+      return { ok: false, message: "Invalid Captcha" };
     }
+    
     return { ok: true, message: "" };
   }
-
+  
   if (captchaCanvas) refreshCaptcha();
   if (refreshBtn) refreshBtn.addEventListener("click", refreshCaptcha);
   if (captchaInput) {
@@ -190,8 +195,12 @@ document.addEventListener("DOMContentLoaded", () => {
       // Validate CAPTCHA
       const captchaResult = validateCaptchaInput(captchaInput ? captchaInput.value : "");
       if (!captchaResult.ok) {
-        if (captchaError) captchaError.textContent = captchaResult.message;
+        // CHANGED: We call refreshCaptcha() FIRST so it clears the old stuff
         refreshCaptcha();   
+        
+        // CHANGED: We set the error message SECOND so it doesn't get erased!
+        if (captchaError) captchaError.textContent = captchaResult.message;
+        
         captchaInput && captchaInput.focus();
         return;
       }

@@ -18,8 +18,9 @@
 
   <div class="right-panel">
     <div class="form-box">
-      <h2 id="formTitle">Login</h2>
-      <p id="formSubtitle">Access your account</p>
+      <img src="css/logo.png" alt="Logo" class="auth-logo">
+      
+      <h2 id="formTitle">Sign in to ISE</h2>
 
       <form id="loginForm">
         <input type="text"     id="loginIdentifier" placeholder="Username or Email" required>
@@ -40,12 +41,13 @@
       </form>
 
       <form id="twoFactorForm" style="display: none;">
-        <p style="margin-bottom: 15px; color: #64748b; font-size: 0.9rem;">A 6-digit verification code has been sent to your email.</p>
-        <input type="text" id="twoFactorCode" placeholder="123456" maxlength="6" required style="letter-spacing: 5px; text-align: center; font-size: 1.2rem; font-weight: bold;">
-        <p id="twoFactorError" style="color: #dc2626; font-size: 0.85rem; margin-bottom: 10px;"></p>
+        <p style="margin-bottom: 15px; color: #a1a1aa; font-size: 0.9rem; text-align: center;">A 6-digit verification code has been sent to your email.</p>
         
-        <button type="submit">Verify & Login</button>
-        <button type="button" id="backToLoginBtn" style="margin-top: 10px; background: transparent; border: 1px solid #cbd5e1; color: #475569; width: 100%; padding: 12px; border-radius: 5px; cursor: pointer; transition: 0.3s; font-weight: bold;">Back to Login</button>
+        <input type="text" id="twoFactorCode" placeholder="123456" maxlength="6" required autocomplete="off">
+        <p id="twoFactorError" style="color: #f87171; font-size: 0.85rem; margin-bottom: 5px; text-align: center; min-height: 14px;"></p>
+        
+        <button type="submit" id="verifyBtn" style="width: 100%;">Verify & Login</button>
+        <button type="button" id="backToLoginBtn" class="secondary-btn">Back to Login</button>
       </form>
 
       <div class="forgot-password-section" id="forgotPasswordDiv">

@@ -55,9 +55,9 @@ document.getElementById('requestTokenForm').addEventListener('submit', async (e)
     const userCaptcha = document.getElementById('captchaInput').value;
     const captchaError = document.getElementById('captchaError');
     
-    // Make case-insensitive comparison (Both converted to lowercase)
-    if (userCaptcha.toLowerCase() !== currentCaptcha.toLowerCase()) {
-        captchaError.textContent = "Incorrect CAPTCHA. Please try again.";
+    // Strict Case-Sensitive comparison (Removed .toLowerCase())
+    if (userCaptcha !== currentCaptcha) {
+        captchaError.textContent = "Invalid Captcha";
         document.getElementById('captchaInput').value = ""; // Clear input
         generateCaptcha(); // Generate a new one
         return; // Stop form submission

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign Up</title>
+<title>Sign Up - Inventory Security Engine</title>
 
 <link rel="stylesheet" href="css/auth.css">
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
@@ -20,8 +20,9 @@
 
   <div class="right-panel">
     <div class="form-box">
-      <h2>Let's get started</h2>
-      <p>Sign up to continue</p>
+      <img src="css/logo.png" alt="Logo" class="auth-logo">
+      
+      <h2>Sign up to ISE</h2>
 
       <form id="signupForm">
         <input type="text" id="signupFullName" placeholder="Full Name" required>
@@ -37,7 +38,7 @@
           <input type="checkbox" id="termsCheckbox" required>
           <label for="termsCheckbox">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
         </div>
-<!-- TEXT CAPTCHA (canvas + regex, no API key needed) -->
+        
         <div class="captcha-box">
           <label class="captcha-label">Captcha</label>
           <div class="captcha-row">
