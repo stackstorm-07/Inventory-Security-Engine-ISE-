@@ -70,14 +70,14 @@ body {
 /* ===== LOGO STYLING ===== */
 .auth-logo {
   display: block;
-  margin: 0 auto 15px auto;
-  width: 65px; 
+  margin: 0 auto 10px auto; /* Reduced bottom margin */
+  width: 110px;             /* Increased width for a bigger logo */
   height: auto;
 }
 
 /* ===== HEADINGS ===== */
 .form-box h2 {
-  margin-bottom: 24px;
+  margin-bottom: 16px; /* Reduced from 24px to save space */
   font-size: 26px;
   font-weight: 600;
   text-align: center;
@@ -97,12 +97,12 @@ body {
 form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px; /* Reduced from 8px to keep fields closer together */
 }
 
 /* ===== INPUTS ===== */
 input {
-  padding: 12px 12px 12px 40px;
+  padding: 10px 12px 10px 40px; /* Reduced top/bottom padding */
   border-radius: 8px;
   border: 1px solid #3b3659;
   outline: none;
@@ -219,7 +219,7 @@ input[type="checkbox"] {
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
-  flex-wrap: wrap; /* This allows items to wrap to the next line */
+  flex-wrap: wrap; /* Allows items to wrap to the next line */
 }
 
 #captchaCanvas {
@@ -257,7 +257,7 @@ input[type="checkbox"] {
 #captchaInput {
   padding-left: 12px !important;
   letter-spacing: 4px;
-  text-transform: none; /* CHANGED TO NONE SO CASES SHOW CORRECTLY */
+  text-transform: none; /* Shows correct casing */
   font-weight: bold;
   background-image: none !important;
 }
