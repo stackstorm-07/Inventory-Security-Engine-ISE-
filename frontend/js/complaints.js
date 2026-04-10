@@ -17,6 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    const navLinksEl = document.querySelector('.nav-links');
+    if (navLinksEl && user.role === 'viewer') {
+        const ordersNav = document.createElement('a');
+        ordersNav.href = 'viewer-inventory.html';
+        ordersNav.className = 'nav-item';
+        ordersNav.textContent = 'Orders & Trades';
+        navLinksEl.appendChild(ordersNav);
+    }
+
     // Show page content based on role
     if (user.role === 'viewer') {
         pageHeaderTitle.textContent = 'Report System Issues';

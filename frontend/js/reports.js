@@ -75,22 +75,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function displayReports(data) {
-        // Update inventory overview cards
-        const inventory = data.inventory_overview;
-        document.querySelector('.report-card:nth-child(1) .metric-value:nth-child(1)').textContent = inventory.total_assets;
-        document.querySelector('.report-card:nth-child(1) .metric-value:nth-child(2)').textContent = inventory.checked_out;
-        document.querySelector('.report-card:nth-child(1) .metric-value:nth-child(3)').textContent = inventory.available;
-        document.querySelector('.report-card:nth-child(1) .metric-value:nth-child(4)').textContent = inventory.under_maintenance;
+        const reportCards = document.querySelectorAll('.report-card');
+        const inventoryCard = reportCards[0];
+        const securityCard = reportCards[1];
 
-        // Update security metrics cards
-        const security = data.security_metrics;
-        document.querySelector('.report-card:nth-child(2) .metric-value:nth-child(1)').textContent = security.active_alerts;
-        document.querySelector('.report-card:nth-child(2) .metric-value:nth-child(2)').textContent = security.resolved_this_month;
-        document.querySelector('.report-card:nth-child(2) .metric-value:nth-child(3)').textContent = security.system_uptime;
-        document.querySelector('.report-card:nth-child(2) .metric-value:nth-child(4)').textContent = security.failed_access_attempts;
+        // Update inventory overview card
+        const inventory = data.inventory_overview || {};
+        if (inventoryCard) {
+            const inventoryValues = inventoryCard.querySelectorAll('.metric-value');
+            if (inventoryValues[0]) inventoryValues[0].textContent = inventory.total_assets ?? 0;
+            if (inventoryValues[1]) inventoryValues[1].textContent = inventory.checked_out ?? 0;
+            if (inventoryValues[2]) inventoryValues[2].textContent = inventory.available ?? 0;
+            if (inventoryValues[3]) inventoryValues[3].textContent = inventory.under_maintenance ?? 0;
+        }
+
+        // Update security metrics card
+        const security = data.security_metrics || {};
+        if (securityCard) {
+            const securityValues = securityCard.querySelectorAll('.metric-value');
+            if (securityValues[0]) securityValues[0].textContent = security.active_alerts ?? 0;
+            if (securityValues[1]) securityValues[1].textContent = security.resolved_this_month ?? 0;
+            if (securityValues[2]) securityValues[2].textContent = security.system_uptime ?? 'N/A';
+            if (securityValues[3]) securityValues[3].textContent = security.failed_access_attempts ?? 0;
+        }
 
         // Update monthly activity table
-        if (reportsTableBody && data.monthly_activity) {
+        if (reportsTableBody && Array.isArray(data.monthly_activity)) {
             reportsTableBody.innerHTML = data.monthly_activity.map(activity => `
                 <tr>
                     <td>${activity.month}</td>

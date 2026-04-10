@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders & Trades - Inventory Security Engine</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f9fafb; margin: 0; color: #1f2937; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 0 2rem; height: 64px; border-bottom: 1px solid #e5e7eb; }
+        .nav-links { display: flex; gap: 2rem; }
+        .nav-item { text-decoration: none; color: #4b5563; font-size: 0.9rem; font-weight: 500; border-bottom: 2px solid transparent; padding-bottom: 4px; }
+        .nav-item.active { color: #2563eb; border-bottom-color: #2563eb; }
+        .logout-btn { background: transparent; border: 1px solid #d1d5db; padding: 0.4rem 1rem; border-radius: 6px; color: #dc2626; cursor: pointer; font-weight: 500; }
+        .main-content { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+        .page-header p { color: #6b7280; margin: 0; font-size: 0.95rem; }
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; }
+        .tab-btn { background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
+        .panel { display: none; background: #fff; padding: 1.5rem; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 1.5rem; }
+        .panel.active { display: block; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.35rem; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.65rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; }
+        .submit-btn { background: #2563eb; color: #fff; border: none; padding: 0.65rem 1.25rem; border-radius: 6px; font-weight: 500; cursor: pointer; }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .message { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; display: none; }
+        .message.success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; display: block; }
+        .message.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; display: block; }
+        .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; background: #fafafa; }
+        .card-title { font-weight: 600; margin-bottom: 0.35rem; }
+        .card-meta { font-size: 0.8rem; color: #6b7280; }
+        .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-approved, .badge-completed { background: #d1fae5; color: #065f46; }
+        .badge-rejected, .badge-cancelled { background: #f3f4f6; color: #374151; }
+        .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+        .btn-sm.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .hint { font-size: 0.85rem; color: #6b7280; margin-top: 0.5rem; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand" style="font-weight:700;">Inventory Security Engine</div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="inventory-logs.html" class="nav-item">Inventory Logs</a>
+            <a href="complaints.html" class="nav-item">Complaints</a>
+            <a href="viewer-inventory.html" class="nav-item active">Orders & Trades</a>
+        </div>
+        <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1>Orders & peer trades</h1>
+            <p>Request inventory from staff, or propose a swap with another viewer (both assets must be assigned correctly).</p>
+        </div>
+        <div id="message" class="message"></div>
+
+        <div class="tabs">
+            <button type="button" class="tab-btn active" data-tab="order">Order inventory</button>
+            <button type="button" class="tab-btn" data-tab="trade">Trade with viewers</button>
+        </div>
+
+        <div id="panel-order" class="panel active">
+            <h2 style="font-size:1.1rem; margin:0 0 1rem;">Place an order</h2>
+            <form id="orderForm">
+                <div class="form-group">
+                    <label for="orderAsset">Asset *</label>
+                    <select id="orderAsset" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="orderNote">Note (optional)</label>
+                    <textarea id="orderNote" rows="2" placeholder="Reason or timing"></textarea>
+                </div>
+                <button type="submit" class="submit-btn" id="orderSubmit">Submit order</button>
+            </form>
+            <p class="hint">Orders stay <strong>pending</strong> until staff or an admin updates them. You will see status below.</p>
+
+            <h2 style="font-size:1.1rem; margin:1.5rem 0 1rem;">Your orders</h2>
+            <div id="ordersList"><p style="color:#6b7280;">Loading…</p></div>
+        </div>
+
+        <div id="panel-trade" class="panel">
+            <h2 style="font-size:1.1rem; margin:0 0 1rem;">Propose a trade</h2>
+            <p class="hint">You offer an asset <strong>assigned to you</strong> (your username or full name must match the asset’s “Assigned” field). You request an asset <strong>assigned to the other viewer</strong>. They accept or reject.</p>
+            <form id="tradeForm">
+                <div class="form-group">
+                    <label for="tradePeer">Trade with (viewer) *</label>
+                    <select id="tradePeer" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="offerAsset">Your asset to offer *</label>
+                    <select id="offerAsset" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="requestAsset">Their asset you want *</label>
+                    <select id="requestAsset" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="tradeMessage">Message (optional)</label>
+                    <textarea id="tradeMessage" rows="2"></textarea>
+                </div>
+                <button type="submit" class="submit-btn" id="tradeSubmit">Send proposal</button>
+            </form>
+
+            <h2 style="font-size:1.1rem; margin:1.5rem 0 1rem;">Trades</h2>
+            <div id="tradesList"><p style="color:#6b7280;">Loading…</p></div>
+        </div>
+    </main>
+
+    <script src="js/viewer-inventory.js"></script>
+</body>
+</html>

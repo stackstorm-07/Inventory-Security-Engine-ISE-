@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check authentication
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const isAdmin = user.role === 'admin';
 
     if (!token) {
         window.location.href = "login.html";
@@ -81,6 +82,14 @@ document.addEventListener("DOMContentLoaded", () => {
         alertsContainer.innerHTML = alerts.map(alert => {
             const time = new Date(alert.time).toLocaleString();
             const severityClass = `severity-${alert.severity}`;
+            const actionButtons = isAdmin
+                ? `
+                    <div class="alert-actions">
+                        <button class="action-btn resolve-btn" onclick="resolveAlert(${alert.id})">Resolve</button>
+                        <button class="action-btn dismiss-btn" onclick="dismissAlert(${alert.id})">Dismiss</button>
+                    </div>
+                `
+                : '';
 
             return `
                 <div class="alert-card">
@@ -90,10 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="alert-time">${time} ${alert.asset_id ? `- Asset ID: ${alert.asset_id}` : ''}</div>
                     </div>
                     <div class="alert-severity ${severityClass}">${alert.severity.toUpperCase()}</div>
-                    <div class="alert-actions">
-                        <button class="action-btn resolve-btn" onclick="resolveAlert(${alert.id})">Resolve</button>
-                        <button class="action-btn dismiss-btn" onclick="dismissAlert(${alert.id})">Dismiss</button>
-                    </div>
+                    ${actionButtons}
                 </div>
             `;
         }).join('');
@@ -101,6 +107,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Global functions for button clicks
     window.resolveAlert = async (alertId) => {
+        if (!isAdmin) {
+            alert('Only admins can update alert status.');
+            return;
+        }
         if (!confirm('Are you sure you want to resolve this alert?')) return;
 
         try {
@@ -125,6 +135,10 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.dismissAlert = async (alertId) => {
+        if (!isAdmin) {
+            alert('Only admins can update alert status.');
+            return;
+        }
         if (!confirm('Are you sure you want to dismiss this alert?')) return;
 
         try {
