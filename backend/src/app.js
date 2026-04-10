@@ -4,45 +4,52 @@ const helmet  = require('helmet');
 const morgan  = require('morgan');
 const path    = require('path');
 
-// ── Existing routes (UNCHANGED) ──────────────────────────
-const authRoutes      = require('./routes/authRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-
-// ── NEW: orders & trades admin routes ────────────────────
+const authRoutes        = require('./routes/authRoutes');
+const dashboardRoutes   = require('./routes/dashboardRoutes');
 const ordersAdminRoutes = require('./routes/ordersAdminRoutes');
 
-// ── Existing middleware (UNCHANGED) ──────────────────────
-const { verifyToken }      = require('./middleware/auth');
-const { requireRole }      = require('./middleware/rbac');
-const sqlInjectionDetector = require('./middleware/sqlInjectionDetector');
+const { verifyToken }         = require('./middleware/auth');
+const { requireRole }         = require('./middleware/rbac');
+const sqlInjectionDetector    = require('./middleware/sqlInjectionDetector');
+const { registerAdminClient } = require('./middleware/sqlInjectionDetector');
 
 const app = express();
 
-// ── Core security middleware (UNCHANGED) ─────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// ── SQL Injection Detector (added in previous step) ──────
 app.use(sqlInjectionDetector);
 
-// ── Static frontend (UNCHANGED) ──────────────────────────
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
-// ── Health check (UNCHANGED) ─────────────────────────────
 app.get('/api-status', (req, res) => {
   res.send('API is running...');
 });
 
-// ── Existing API routes (UNCHANGED) ──────────────────────
 app.use('/api/auth',      authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/orders',    ordersAdminRoutes);
 
-// ── NEW: Admin orders & trades management ────────────────
-app.use('/api/orders', ordersAdminRoutes);
+// ── Real-time admin alert stream (SSE) ───────────────────────────────────────
+// EventSource cannot set headers — token accepted via query param
+app.get('/api/admin/alert-stream', (req, res, next) => {
+  if (req.query.token && !req.headers.authorization) {
+    req.headers.authorization = 'Bearer ' + req.query.token;
+  }
+  next();
+}, verifyToken, requireRole('admin'), (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+  // Heartbeat every 25s to keep connection alive through proxies
+  const hb = setInterval(() => { try { res.write(': heartbeat\n\n'); } catch (_) {} }, 25000);
+  res.on('close', () => clearInterval(hb));
+  registerAdminClient(res, req.user.id);
+});
 
-// ── Existing protected routes (UNCHANGED) ────────────────
 app.get('/api/admin', verifyToken, requireRole('admin'), (req, res) => {
   res.json({ message: 'Admin only area' });
 });

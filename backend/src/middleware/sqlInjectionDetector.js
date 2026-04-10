@@ -10,10 +10,31 @@
  *    1. Logs the threat to the `security_alerts` DB table
  *    2. Returns HTTP 400 with a clear JSON error
  *    3. Admin dashboard security-alerts page shows the entry
+ *    4. Broadcasts real-time SSE alert to all connected admins
  * ============================================================
  */
 
 const pool = require('../config/db');
+
+// ──────────────────────────────────────────────
+// SSE: Track connected admin clients for real-time alerts
+// ──────────────────────────────────────────────
+const adminAlertClients = []; // { res, userId }
+
+function registerAdminClient(res, userId) {
+  adminAlertClients.push({ res, userId });
+  res.on('close', () => {
+    const idx = adminAlertClients.findIndex(c => c.res === res);
+    if (idx !== -1) adminAlertClients.splice(idx, 1);
+  });
+}
+
+function broadcastToAdmins(payload) {
+  const data = JSON.stringify(payload);
+  adminAlertClients.forEach(({ res }) => {
+    try { res.write('data: ' + data + '\n\n'); } catch (_) {}
+  });
+}
 
 // ──────────────────────────────────────────────
 // SQL INJECTION PATTERN LIST
@@ -31,6 +52,9 @@ const SQL_PATTERNS = [
 
   // Stacked queries
   /;\s*(DROP|DELETE|INSERT|UPDATE|CREATE|ALTER|TRUNCATE|EXEC|EXECUTE)/gi,
+
+  // Standalone semicolon — potential query termination / injection probe
+  /;/g,
 
   // Schema / table dumps
   /\bINFORMATION_SCHEMA\b/gi,
@@ -109,6 +133,17 @@ async function logThreat({ ip, method, path, matchedRule, payload }) {
       ]
     );
     conn.release();
+
+    // Broadcast real-time alert to all connected admin SSE clients
+    broadcastToAdmins({
+      type: 'SQL_INJECTION_ALERT',
+      ip,
+      method,
+      path,
+      matchedRule,
+      payload: String(payload).slice(0, 200),
+      time: new Date().toISOString(),
+    });
   } catch (err) {
     // Never crash the server because of a logging failure
     console.error('[SQLi Detector] Failed to log threat to DB:', err.message);
@@ -170,3 +205,4 @@ async function sqlInjectionDetector(req, res, next) {
 }
 
 module.exports = sqlInjectionDetector;
+module.exports.registerAdminClient = registerAdminClient;

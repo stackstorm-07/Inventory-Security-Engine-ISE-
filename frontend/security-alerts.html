@@ -532,6 +532,65 @@
   // ── Initial load + live poll every 15s ───────
   loadAlerts();
   setInterval(loadAlerts, 15000);
+
+  // ── Real-time SQL Injection Alert via SSE ────────────────────────────────
+  (function initAlertStream() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    // Inject toast container if not present
+    if (!document.getElementById('sqli-toast-container')) {
+      const tc = document.createElement('div');
+      tc.id = 'sqli-toast-container';
+      tc.style.cssText = [
+        'position:fixed','top:1rem','right:1rem','z-index:9999',
+        'display:flex','flex-direction:column','gap:0.5rem','max-width:380px'
+      ].join(';');
+      document.body.appendChild(tc);
+    }
+
+    function showSQLiToast(data) {
+      const tc = document.getElementById('sqli-toast-container');
+      const toast = document.createElement('div');
+      toast.style.cssText = [
+        'background:#7f1d1d','color:#fff','border-left:4px solid #ef4444',
+        'padding:0.85rem 1rem','border-radius:8px','font-size:0.85rem',
+        'box-shadow:0 4px 12px rgba(0,0,0,0.35)','opacity:1',
+        'transition:opacity 0.4s'
+      ].join(';');
+      toast.innerHTML =
+        '<strong>🚨 SQL Injection Attempt!</strong><br>' +
+        '<span style="opacity:0.85">IP: ' + (data.ip||'unknown') + ' &nbsp;|&nbsp; ' +
+        (data.method||'') + ' ' + (data.path||'') + '</span><br>' +
+        '<span style="font-family:monospace;font-size:0.78rem;opacity:0.75">' +
+        String(data.payload||'').slice(0,120) + '</span>';
+      tc.appendChild(toast);
+      // Reload alerts table so the new entry shows immediately
+      if (typeof loadAlerts === 'function') loadAlerts();
+      // Auto-dismiss after 8 seconds
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 450);
+      }, 8000);
+    }
+
+    const API_BASE = 'http://localhost:5000';
+    const evtSrc = new EventSource(
+      API_BASE + '/api/admin/alert-stream?token=' + encodeURIComponent(token)
+    );
+
+    evtSrc.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === 'SQL_INJECTION_ALERT') showSQLiToast(data);
+      } catch (_) {}
+    };
+
+    evtSrc.onerror = () => {
+      // Silently reconnect — browser handles this automatically
+    };
+  })();
+
   </script>
 </body>
 </html>

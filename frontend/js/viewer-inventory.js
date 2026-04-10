@@ -120,8 +120,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        rebuildOfferOptions();
-        rebuildRequestOptions();
+        // Note: rebuildOfferOptions/rebuildRequestOptions are called from
+        // the init sequence AFTER hydrateProfile() so user.full_name is available.
     }
 
     function rebuildOfferOptions() {
@@ -336,6 +336,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!res.ok) throw new Error(data.error || "Failed");
             showMessage(data.message || "Trade sent", "success");
             tradeForm.reset();
+            await hydrateProfile();       // keep user object fresh after trade
+            await loadAssetsAndPeers();   // reload assets so assignments reflect swap
             rebuildOfferOptions();
             rebuildRequestOptions();
             await loadTrades();
@@ -348,8 +350,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     (async () => {
         try {
-            await hydrateProfile();
-            await loadAssetsAndPeers();
+            await hydrateProfile();          // must finish first so user.full_name is set
+            await loadAssetsAndPeers();       // now assetMatchesMe() has full_name
+            rebuildOfferOptions();            // re-run after profile hydrated
+            rebuildRequestOptions();
             await loadOrders();
             await loadTrades();
         } catch (e) {
