@@ -157,6 +157,17 @@ document.addEventListener("DOMContentLoaded", () => {
   if (signupForm) {
     signupForm.addEventListener("submit", (e) => {
       e.preventDefault();
+
+      // === ADDED CAPTCHA VALIDATION HERE ===
+      const captchaResult = validateCaptchaInput(captchaInput ? captchaInput.value : "");
+      if (!captchaResult.ok) {
+        refreshCaptcha();   
+        if (captchaError) captchaError.textContent = captchaResult.message;
+        captchaInput && captchaInput.focus();
+        return; // Stops the form from submitting!
+      }
+      // =====================================
+
       const nameRegex = /^[A-Za-z\s]+$/;
       if (!nameRegex.test(fullNameInput.value)) { alert("Full Name must contain only alphabetical letters and spaces."); fullNameInput.focus(); return; }
       const usernameRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]+$/;
@@ -195,12 +206,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // Validate CAPTCHA
       const captchaResult = validateCaptchaInput(captchaInput ? captchaInput.value : "");
       if (!captchaResult.ok) {
-        // CHANGED: We call refreshCaptcha() FIRST so it clears the old stuff
         refreshCaptcha();   
-        
-        // CHANGED: We set the error message SECOND so it doesn't get erased!
         if (captchaError) captchaError.textContent = captchaResult.message;
-        
         captchaInput && captchaInput.focus();
         return;
       }
