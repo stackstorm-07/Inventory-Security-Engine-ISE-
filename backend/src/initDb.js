@@ -138,6 +138,17 @@ async function initializeDatabase() {
       )
     `);
 
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS two_factor_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        code VARCHAR(10) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     // Insert sample data
     await insertSampleData(conn);
 
@@ -194,8 +205,23 @@ async function insertSampleData(conn) {
       `INSERT IGNORE INTO users (full_name, username, email, phone, password_hash, role, is_active) VALUES ${rowPlaceholders}`,
       staffValues.flat()
     );
-    // Insert sample inventory logs
-    
+
+    // Seed viewer users
+    const viewerPassword = await bcrypt.hash('viewer123', saltRounds);
+    const viewerUsers = [
+      { full_name: 'Viewer User 1', username: 'VU2421001' },
+      { full_name: 'Viewer User 2', username: 'VU2421002' },
+      { full_name: 'Viewer User 3', username: 'VU2421003' },
+      { full_name: 'Viewer User 4', username: 'VU2421004' },
+      { full_name: 'Viewer User 5', username: 'VU2421005' }
+    ];
+    const viewerValues = viewerUsers.map(user => [user.full_name, user.username, `${user.username}@company.com`, null, viewerPassword, 'viewer', 1]);
+    const viewerPlaceholders = viewerValues.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+    await conn.query(
+      `INSERT IGNORE INTO users (full_name, username, email, phone, password_hash, role, is_active) VALUES ${viewerPlaceholders}`,
+      viewerValues.flat()
+    );
+
     // Insert sample inventory logs
     await conn.query(`
       INSERT IGNORE INTO inventory_logs (date_time, asset_id, item_name, user, action, location, status) VALUES
@@ -224,6 +250,26 @@ async function insertSampleData(conn) {
       ('AST-023', 'HP Printer LaserJet', 'Printer', 'Service Center', 'maintenance', NULL),
       ('AST-067', 'Apple iPad Pro', 'Tablet', 'Executive Office', 'checked_out', 'Sarah Wilson'),
       ('AST-089', 'Lenovo ThinkPad', 'Laptop', 'Warehouse B', 'available', NULL)
+    `);
+
+    // Seed sample viewer orders and trades
+    await conn.query(`
+      INSERT IGNORE INTO viewer_orders (viewer_user_id, asset_id, note, status, staff_response) VALUES
+      ((SELECT id FROM users WHERE username = 'VU2421001'), 'AST-045', 'Requesting monitor for remote work.', 'pending', NULL),
+      ((SELECT id FROM users WHERE username = 'VU2421002'), 'AST-089', 'Need laptop for weekend testing.', 'approved', 'Approved by staff for one-week loan.'),
+      ((SELECT id FROM users WHERE username = 'VU2421003'), 'AST-067', 'Tablet required for delivery verification.', 'rejected', 'Asset currently assigned; try a later date.')
+    `);
+
+    await conn.query(`
+      INSERT IGNORE INTO viewer_trades (from_user_id, to_user_id, offer_asset_id, request_asset_id, message, status) VALUES
+      ((SELECT id FROM users WHERE username = 'VU2421001'), (SELECT id FROM users WHERE username = 'VU2421002'), 'AST-001', 'AST-067', 'Would you swap your iPad for my laptop?', 'pending'),
+      ((SELECT id FROM users WHERE username = 'VU2421004'), (SELECT id FROM users WHERE username = 'VU2421003'), 'AST-089', 'AST-045', 'Requesting your monitor for a short period.', 'pending')
+    `);
+
+    await conn.query(`
+      INSERT IGNORE INTO complaints (user_id, title, category, priority, description, status, assigned_staff_id) VALUES
+      ((SELECT id FROM users WHERE username = 'VU2421005'), 'Unable to submit an order', 'access_problem', 'medium', 'The order page is not accepting details and the button keeps spinning.', 'pending', NULL),
+      ((SELECT id FROM users WHERE username = 'VU2421002'), 'Asset assignment does not update', 'system_error', 'high', 'I submitted an order but my asset still shows as not assigned.', 'in_progress', (SELECT id FROM users WHERE username = 'AU0000001'))
     `);
 
   } catch (error) {
