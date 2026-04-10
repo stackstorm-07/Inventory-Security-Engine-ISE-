@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         canUpdateStatus: userRole === 'admin' || userRole === 'staff',
         canDelete: userRole === 'admin'
     };
-    const pageHeaderDesc = document.querySelector('.page-header p');
+    /* const pageHeaderDesc = document.querySelector('.page-header p');
     if (pageHeaderDesc) {
         if (userRole === 'viewer') {
             pageHeaderDesc.textContent = 'View inventory and search assets. Changes require staff or admin.';
@@ -33,7 +33,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (userRole === 'admin') {
             pageHeaderDesc.textContent = 'Full inventory control: add, update status, and remove assets.';
         }
-    }
+    } */
+   
     const navLinks = document.querySelectorAll('.nav-links .nav-item');
     
     navLinks.forEach(link => {

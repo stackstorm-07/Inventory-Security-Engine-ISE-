@@ -35,9 +35,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Export functionality
     if (exportBtn) {
-        exportBtn.addEventListener("click", () => {
-            alert("Export functionality would be implemented here");
+        exportBtn.addEventListener("click", async () => {
+            try {
+                exportBtn.disabled = true;
+                exportBtn.textContent = 'Exporting...';
+
+                const response = await fetch('http://localhost:5000/api/dashboard/reports/export', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to export report');
+                }
+
+                if (data.csv) {
+                    const blob = new Blob([data.csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'ise_report_export.csv';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }
+
+                showToast('Report exported and emailed successfully.', 'success');
+            } catch (error) {
+                console.error('Report export error:', error);
+                showToast(error.message || 'Unable to export report.', 'error');
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.textContent = 'Export Report';
+            }
         });
+    }
+
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        toast.style.padding = '1rem 1.25rem';
+        toast.style.borderRadius = '10px';
+        toast.style.color = '#fff';
+        toast.style.backgroundColor = type === 'success' ? '#16a34a' : '#dc2626';
+        toast.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+        toast.style.zIndex = '9999';
+        toast.style.maxWidth = '320px';
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 4000);
     }
 
     async function loadReports() {
