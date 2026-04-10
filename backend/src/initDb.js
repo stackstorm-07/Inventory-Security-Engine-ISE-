@@ -108,6 +108,36 @@ async function initializeDatabase() {
       )
     `);
 
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS viewer_orders (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        viewer_user_id INT NOT NULL,
+        asset_id VARCHAR(50) NOT NULL,
+        note TEXT,
+        status ENUM('pending', 'approved', 'rejected', 'fulfilled', 'cancelled') DEFAULT 'pending',
+        staff_response TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (viewer_user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS viewer_trades (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        from_user_id INT NOT NULL,
+        to_user_id INT NOT NULL,
+        offer_asset_id VARCHAR(50) NOT NULL,
+        request_asset_id VARCHAR(50) NOT NULL,
+        message TEXT,
+        status ENUM('pending', 'rejected', 'cancelled', 'completed') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (from_user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (to_user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     // Insert sample data
     await insertSampleData(conn);
 
