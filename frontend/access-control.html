@@ -339,6 +339,74 @@
         .create-user-message.error {
             color: #b91c1c;
         }
+
+        .complaint-manager {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .complaint-manager.hidden {
+            display: none;
+        }
+
+        .complaint-manager h4 {
+            margin: 0 0 1rem 0;
+            font-size: 1rem;
+        }
+
+        .complaint-manager label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .complaint-manager select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .complaint-manager .manager-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .complaint-manager .manager-actions button {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .complaint-manager .cancel-btn {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .complaint-manager .cancel-btn:hover {
+            background-color: #e5e7eb;
+        }
+
+        .complaint-manager .update-btn {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .complaint-manager .update-btn:hover {
+            background-color: #1d4ed8;
+        }
     </style>
 </head>
 <body>
@@ -461,6 +529,30 @@
                         <!-- Data will be loaded dynamically -->
                     </tbody>
                 </table>
+            </div>
+
+            <div id="complaintManager" class="complaint-manager hidden">
+                <h4>Manage Complaint</h4>
+                <p id="complaintManagerNote" style="margin-bottom:1rem;color:#4b5563;font-size:0.9rem;">Select a status and assign an active staff member or leave unassigned.</p>
+                <div>
+                    <label for="complaintStatusSelect">Complaint Status</label>
+                    <select id="complaintStatusSelect">
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="complaintStaffSelect">Assign Staff</label>
+                    <select id="complaintStaffSelect">
+                        <option value="">Unassigned</option>
+                    </select>
+                </div>
+                <div class="manager-actions">
+                    <button id="updateComplaintBtn" class="update-btn">Save Changes</button>
+                    <button id="cancelComplaintBtn" class="cancel-btn">Cancel</button>
+                </div>
             </div>
         </div>
 

@@ -9,10 +9,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const createUserBox = document.getElementById('createUserBox');
     const createUserForm = document.getElementById('createUserForm');
     const createUserMessage = document.getElementById('createUserMessage');
+    const complaintManager = document.getElementById('complaintManager');
+    const complaintStatusSelect = document.getElementById('complaintStatusSelect');
+    const complaintStaffSelect = document.getElementById('complaintStaffSelect');
+    const updateComplaintBtn = document.getElementById('updateComplaintBtn');
+    const cancelComplaintBtn = document.getElementById('cancelComplaintBtn');
+    let currentComplaintId = null;
 
     // Check authentication
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    let staffMembers = [];
 
     if (!token) {
         window.location.href = "login.html";
@@ -109,6 +116,56 @@ document.addEventListener("DOMContentLoaded", () => {
                 displayCreateUserMessage('Failed to create user. Please try again.', 'error');
             }
         });
+    }
+
+    if (updateComplaintBtn) {
+        updateComplaintBtn.addEventListener('click', () => {
+            if (!currentComplaintId) return;
+            const status = complaintStatusSelect.value;
+            const assignedStaffId = complaintStaffSelect.value ? parseInt(complaintStaffSelect.value, 10) : null;
+            updateComplaint(currentComplaintId, status, assignedStaffId);
+        });
+    }
+
+    if (cancelComplaintBtn) {
+        cancelComplaintBtn.addEventListener('click', () => {
+            closeComplaintManager();
+        });
+    }
+
+    function openComplaintManager(complaintId, currentStatus, currentAssignedId) {
+        currentComplaintId = complaintId;
+        if (complaintStatusSelect) {
+            complaintStatusSelect.value = currentStatus;
+        }
+        if (complaintStaffSelect) {
+            complaintStaffSelect.innerHTML = '<option value="">Unassigned</option>';
+            if (staffMembers.length) {
+                staffMembers.forEach(st => {
+                    const selected = st.id === currentAssignedId ? 'selected' : '';
+                    complaintStaffSelect.innerHTML += `<option value="${st.id}" ${selected}>${escapeHtml(st.full_name)} (${escapeHtml(st.username)})</option>`;
+                });
+            } else {
+                complaintStaffSelect.innerHTML += '<option value="" disabled>No active staff members found</option>';
+            }
+        }
+        if (complaintManager) {
+            complaintManager.classList.remove('hidden');
+            complaintManager.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function closeComplaintManager() {
+        currentComplaintId = null;
+        if (complaintManager) {
+            complaintManager.classList.add('hidden');
+        }
+    }
+
+    function hideComplaintManager() {
+        if (complaintManager) {
+            complaintManager.classList.add('hidden');
+        }
     }
 
     // Logout functionality
@@ -251,6 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const complaints = await response.json();
             displayComplaints(complaints);
+            closeComplaintManager();
 
         } catch (error) {
             console.error('Error loading complaints:', error);
@@ -287,18 +345,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join('');
     }
 
+    async function loadStaffMembers() {
+        try {
+            const response = await fetch('http://localhost:5000/api/dashboard/staff-members', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                console.warn('Could not load staff members for assignment.');
+                staffMembers = [];
+                return;
+            }
+            staffMembers = await response.json();
+        } catch (error) {
+            console.error('Error loading staff members:', error);
+            staffMembers = [];
+        }
+    }
+
     // Global function for complaint management
-    window.manageComplaint = (complaintId, currentStatus, currentAssigned) => {
-        const newStatus = prompt('Enter new status (pending/in_progress/resolved/closed):', currentStatus);
-        if (!newStatus || !['pending', 'in_progress', 'resolved', 'closed'].includes(newStatus)) {
-            alert('Invalid status. Must be pending, in_progress, resolved, or closed.');
-            return;
+    window.manageComplaint = async (complaintId, currentStatus, currentAssigned) => {
+        if (!staffMembers.length) {
+            await loadStaffMembers();
         }
 
-        const assignedStaffId = prompt('Enter assigned staff ID (leave empty to unassign):', currentAssigned || '');
-        const finalAssignedId = assignedStaffId && assignedStaffId.trim() ? parseInt(assignedStaffId) : null;
-
-        updateComplaint(complaintId, newStatus, finalAssignedId);
+        openComplaintManager(complaintId, currentStatus, currentAssigned);
     };
 
     async function updateComplaint(complaintId, status, assignedStaffId) {
@@ -314,9 +388,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (response.ok) {
                 loadComplaints(); // Reload complaints
+                closeComplaintManager();
                 alert('Complaint updated successfully');
             } else {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 alert('Failed to update complaint: ' + (errorData.error || 'Unknown error'));
             }
         } catch (error) {

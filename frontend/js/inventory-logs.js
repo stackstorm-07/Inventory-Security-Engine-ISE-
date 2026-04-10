@@ -25,10 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
             securityAlertsLink.style.display = 'none';
         }
 
-        const reportsLink = document.querySelector('a[href="reports.html"]');
-        if (reportsLink && user.role === 'viewer') {
-            reportsLink.style.display = 'none';
-        }
     }
 
     // Load inventory logs

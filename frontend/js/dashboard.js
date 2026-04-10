@@ -44,11 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (href === 'access-control.html' && userRole !== 'admin') {
             link.style.display = 'none';
         }
-        
-        // Hide Security Alerts and Reports for viewers
-        if ((href === 'security-alerts.html' || href === 'reports.html') && userRole === 'viewer') {
-            link.style.display = 'none';
-        }
     });
 
     // Add Complaints / Tasks link based on role

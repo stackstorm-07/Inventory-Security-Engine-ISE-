@@ -19,12 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (accessControlLink && user.role !== 'admin') {
             accessControlLink.style.display = 'none';
         }
-
-        // Hide Reports link for viewers
-        const reportsLink = document.querySelector('a[href="reports.html"]');
-        if (reportsLink && user.role === 'viewer') {
-            reportsLink.style.display = 'none';
-        }
     }
 
     // Load security alerts
@@ -85,8 +79,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const actionButtons = isAdmin
                 ? `
                     <div class="alert-actions">
-                        <button class="action-btn resolve-btn" onclick="resolveAlert(${alert.id})">Resolve</button>
-                        <button class="action-btn dismiss-btn" onclick="dismissAlert(${alert.id})">Dismiss</button>
+                        <button class="action-btn resolve-btn" data-action="resolve" data-alert-id="${alert.id}">Resolve</button>
+                        <button class="action-btn dismiss-btn" data-action="dismiss" data-alert-id="${alert.id}">Dismiss</button>
                     </div>
                 `
                 : '';
@@ -105,14 +99,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }).join('');
     }
 
-    // Global functions for button clicks
-    window.resolveAlert = async (alertId) => {
+    alertsContainer.addEventListener('click', async (event) => {
+        let target = event.target;
+        if (target.nodeType !== Node.ELEMENT_NODE) {
+            target = target.parentElement;
+        }
+        const button = target && target.closest ? target.closest('button[data-action]') : null;
+        if (!button) return;
+        const alertId = button.dataset.alertId;
+        const action = button.dataset.action;
+
+        if (!alertId || !action) return;
         if (!isAdmin) {
             alert('Only admins can update alert status.');
             return;
         }
-        if (!confirm('Are you sure you want to resolve this alert?')) return;
 
+        if (action === 'resolve' && !confirm('Are you sure you want to resolve this alert?')) return;
+        if (action === 'dismiss' && !confirm('Are you sure you want to dismiss this alert?')) return;
+
+        const resolved = action === 'resolve';
         try {
             const response = await fetch(`http://localhost:5000/api/dashboard/security-alerts/${alertId}`, {
                 method: 'PUT',
@@ -120,45 +126,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ resolved: true })
+                body: JSON.stringify({ resolved })
             });
 
             if (response.ok) {
-                loadSecurityAlerts(); // Reload alerts
+                loadSecurityAlerts();
             } else {
-                alert('Failed to resolve alert');
+                const data = await response.json().catch(() => ({}));
+                alert(data.error || 'Failed to update alert status');
             }
         } catch (error) {
-            console.error('Error resolving alert:', error);
-            alert('Error resolving alert');
+            console.error('Error updating alert status:', error);
+            alert('Error updating alert status');
         }
-    };
-
-    window.dismissAlert = async (alertId) => {
-        if (!isAdmin) {
-            alert('Only admins can update alert status.');
-            return;
-        }
-        if (!confirm('Are you sure you want to dismiss this alert?')) return;
-
-        try {
-            const response = await fetch(`http://localhost:5000/api/dashboard/security-alerts/${alertId}`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ resolved: false })
-            });
-
-            if (response.ok) {
-                loadSecurityAlerts(); // Reload alerts
-            } else {
-                alert('Failed to dismiss alert');
-            }
-        } catch (error) {
-            console.error('Error dismissing alert:', error);
-            alert('Error dismissing alert');
-        }
-    };
+    });
 });
